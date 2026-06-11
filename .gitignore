@@ -1,0 +1,107 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+*.code-workspace
+.history/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Environment files - secrets
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.staging
+!.env.example
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/.gradle/
+/android/app/build/
+/android/build/
+
+# iOS/macOS
+ios/Pods/
+ios/.symlinks/
+ios/.generated/
+ios/Flutter/
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/
+
+# IDE
+.vscode/
+*.launch
+.history/
+
+# npm/yarn/node (for web tooling)
+node_modules/
+.npm/
+.yarn/
+.yarn-cache/
+.yarn-integrity
+
+# Build outputs
+/dist/
+/out/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Secrets and credentials - NEVER commit these
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Firebase
+firebase.json
+firebase*.json
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output
+fastlane/README.md
+fastlane/sigh*
+fastlane/run_tests_and_submit_results
