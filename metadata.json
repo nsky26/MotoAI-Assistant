@@ -1,0 +1,6 @@
+{
+  "name": "MotoAI",
+  "description": "AI-powered motorcycle diagnosis and step-by-step repair guidance application.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
