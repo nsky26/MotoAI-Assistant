@@ -1,4 +1,4 @@
-import React, { git remote add origin https://github.com/nsky26/MotoAI-Assistant.gituseState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Gauge, Wrench, Shield, Award, User, RotateCcw, AlertTriangle, Play, CheckCircle2, ChevronRight, Activity, Thermometer, Zap, Cpu 
 } from "lucide-react";
