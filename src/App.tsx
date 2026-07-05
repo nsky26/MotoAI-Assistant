@@ -1,18 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
-  Gauge, Wrench, Shield, Award, User, RotateCcw, AlertTriangle, Play, CheckCircle2, ChevronRight, Activity, Thermometer, Zap, Cpu 
+  Gauge, Wrench, Shield, Award, User, RotateCcw, AlertTriangle, Play, CheckCircle2, ChevronRight, Activity, Thermometer, Zap, Cpu, Clock 
 } from "lucide-react";
 import { Diagnosis } from "./types";
 import { getFallbackDiagnosis } from "./services/diagnosisService";
+import { saveDiagnosis } from "./services/historyService";
 import CameraScanView from "./components/CameraScanView";
 import DiagnosisResultView from "./components/DiagnosisResultView";
 import GuidedRepairView from "./components/GuidedRepairView";
 import CriticalAlertView from "./components/CriticalAlertView";
 import LoginView from "./components/LoginView";
 import ProfileView from "./components/ProfileView";
+import RepairHistoryView from "./components/RepairHistoryView";
 import { useAuth } from "./context/AuthContext";
+import type { DiagnosisRecord } from "./types/history";
 
-type Tab = "scan" | "diagnose" | "repair" | "telemetry" | "profile" | "login";
+type Tab = "scan" | "diagnose" | "repair" | "telemetry" | "profile" | "login" | "history";
 
 export default function App() {
   const { user, isLoading: authLoading } = useAuth();
@@ -30,12 +33,21 @@ export default function App() {
     lidarStatus: "READY"
   };
 
+  // Auto-save diagnosis to history whenever a new one is completed
+  const [customInput, setCustomInput] = useState<string>("");
+  const [voiceTranscript, setVoiceTranscript] = useState<string>("");
+
   // Callback when scanning completes
   const handleDiagnosticComplete = (diag: Diagnosis) => {
     setActiveDiagnosis(diag);
     setIsRepairComplete(false);
     // Transition to the Results or Critical tab
     setActiveTab("diagnose");
+
+    // Auto-save to Firestore if user is authenticated
+    if (user) {
+      saveDiagnosis(user.uid, diag, customInput, voiceTranscript).catch(console.warn);
+    }
   };
 
   // Helper trigger to set brake system failure preset (via service layer)
@@ -230,6 +242,39 @@ export default function App() {
             </>
           )}
 
+          {/* History View */}
+          {activeTab === "history" && (
+            <RepairHistoryView
+              onReopenDiagnosis={(record: DiagnosisRecord) => {
+                // Reconstruct a Diagnosis from the saved record and show it
+                const diag: Diagnosis = {
+                  id: record.diagnosisId,
+                  isCritical: record.isCritical,
+                  issue: record.issue,
+                  confidence: record.confidence,
+                  description: record.rootCause ? `AI Analysis: ${record.rootCause}` : "Saved diagnosis",
+                  difficulty:
+                    record.repairDifficulty === "EXPERT" ? 5 :
+                    record.repairDifficulty === "INTERMEDIATE" ? 3 : 1,
+                  estimatedTime: record.estimatedRepairTime || "N/A",
+                  diyCost: record.estimatedCost?.includes("Free") ? 0 : 20,
+                  proEstimate: record.isCritical ? 200 : 80,
+                  severityCode: record.isCritical ? "H001" : "H002",
+                  severityLevel: record.severity || "MEDIUM",
+                  aiRecommendation: record.rootCause || "Saved from history.",
+                  steps: record.repairSteps,
+                  estimatedCost: record.isCritical ? record.estimatedCost : undefined,
+                  costDetails: record.isCritical ? `Estimated: ${record.estimatedCost}` : undefined,
+                  mechanics: record.nearbyMechanics,
+                };
+                setActiveDiagnosis(diag);
+                setIsRepairComplete(record.repairCompleted);
+                setActiveTab("diagnose");
+              }}
+              onNavigateToLogin={() => setActiveTab("login")}
+            />
+          )}
+
           {/* Profile View */}
           {activeTab === "profile" && (
             <ProfileView
@@ -404,7 +449,24 @@ export default function App() {
             )}
           </button>
 
-          {/* Tab 4: Telemetry list sensor values */}
+          {/* Tab 4: History — replaced Telemetry in nav */}
+          <button
+            id="tab-btn-history"
+            onClick={() => setActiveTab("history")}
+            className={`flex flex-col items-center gap-1.5 relative transition-all duration-300 cursor-pointer ${
+              activeTab === "history" ? "text-emerald-400 scale-110" : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            <Clock className="w-6 h-6 stroke-[2]" />
+            <span className="text-[10px] font-extrabold tracking-wide uppercase font-cyber hidden xs:inline">
+              History
+            </span>
+            {activeTab === "history" && (
+              <div className="absolute -bottom-1 w-8 h-1 bg-emerald-400 rounded-full glow-green"></div>
+            )}
+          </button>
+
+          {/* Tab 5: Telemetry list sensor values */}
           <button
             id="tab-btn-telemetry"
             onClick={() => setActiveTab("telemetry")}

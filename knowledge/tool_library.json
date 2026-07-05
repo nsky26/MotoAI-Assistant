@@ -1,0 +1,26 @@
+{
+  "tools": [
+    { "id": "multimeter", "name": "Digital Multimeter", "category": "electrical_test", "description": "For measuring voltage, resistance, continuity", "imageUrl": null },
+    { "id": "8mm_wrench", "name": "8mm Combination Wrench", "category": "hand_tool", "description": "Commonly used for battery terminals, small bolts", "imageUrl": null },
+    { "id": "10mm_wrench", "name": "10mm Combination Wrench", "category": "hand_tool", "description": "Most common size on Pulsar 150 — used everywhere", "imageUrl": null },
+    { "id": "12mm_wrench", "name": "12mm Combination Wrench", "category": "hand_tool", "description": "Used for starter motor bolts and engine covers", "imageUrl": null },
+    { "id": "spark_plug_socket", "name": "Spark Plug Socket (16mm or 18mm)", "category": "hand_tool", "description": "Deep socket with rubber insert for spark plug removal", "imageUrl": null },
+    { "id": "socket_set", "name": "Socket Set (8-14mm)", "category": "hand_tool", "description": "Ratchet and socket set for general work", "imageUrl": null },
+    { "id": "feeler_gauge", "name": "Feeler Gauge", "category": "measurement", "description": "For measuring spark plug gap and valve clearances", "imageUrl": null },
+    { "id": "torque_wrench", "name": "Torque Wrench (5-50 Nm)", "category": "hand_tool", "description": "For precise tightening of spark plugs and critical bolts", "imageUrl": null },
+    { "id": "screwdriver_set", "name": "Screwdriver Set (Phillips + Flat)", "category": "hand_tool", "description": "For removing panels, clamps, and electrical connectors", "imageUrl": null },
+    { "id": "pliers", "name": "Combination Pliers", "category": "hand_tool", "description": "For pulling fuses, gripping, bending", "imageUrl": null },
+    { "id": "wire_brush", "name": "Wire Brush (Stainless Steel)", "category": "cleaning", "description": "For cleaning battery terminals and corrosion", "imageUrl": null },
+    { "id": "dielectric_grease", "name": "Dielectric Grease", "category": "consumable", "description": "Prevents terminal corrosion, insulates electrical connections", "imageUrl": null },
+    { "id": "anti_seize_compound", "name": "Anti-Seize Compound", "category": "consumable", "description": "Prevents spark plug threads from seizing in cylinder head", "imageUrl": null },
+    { "id": "fuel_line_clamp", "name": "Fuel Line Clamp", "category": "hand_tool", "description": "Pinches fuel line to prevent flow during filter changes", "imageUrl": null },
+    { "id": "crimping_tool", "name": "Crimping Tool", "category": "electrical_tool", "description": "For crimping electrical connectors during wiring repair", "imageUrl": null },
+    { "id": "soldering_iron", "name": "Soldering Iron", "category": "electrical_tool", "description": "For soldering wire splices during harness repair", "imageUrl": null },
+    { "id": "heat_shrink", "name": "Heat Shrink Tubing", "category": "consumable", "description": "Insulates soldered wire connections", "imageUrl": null },
+    { "id": "electrical_tape", "name": "Electrical Tape", "category": "consumable", "description": "For wrapping repaired wires", "imageUrl": null },
+    { "id": "zip_ties", "name": "Zip Ties (Cable Ties)", "category": "consumable", "description": "For securing wiring harness after repair", "imageUrl": null },
+    { "id": "container", "name": "Small Container / Catch Pan", "category": "shop_supply", "description": "For catching fuel drips during fuel system work", "imageUrl": null },
+    { "id": "safety_glasses", "name": "Safety Glasses", "category": "safety", "description": "Always worn when working on battery or fuel system", "imageUrl": null },
+    { "id": "insulated_gloves", "name": "Insulated Gloves", "category": "safety", "description": "Protects against acid and electrical shock", "imageUrl": null }
+  ]
+}

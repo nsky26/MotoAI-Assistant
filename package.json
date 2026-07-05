@@ -13,6 +13,8 @@
   "dependencies": {
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-tflite": "^0.0.1-alpha.10",
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",

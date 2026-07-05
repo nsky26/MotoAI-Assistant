@@ -1,0 +1,33 @@
+{
+  "brands": [
+    {
+      "brand": "Bajaj",
+      "models": [
+        {
+          "model": "Pulsar 150",
+          "years": "2009-present",
+          "engine": "149.5cc single-cylinder, DTS-i",
+          "fuelSystem": "carburetor (pre-2019) / fuel injection (2019+)",
+          "battery": "12V 8Ah (MF)",
+          "sparkPlugGap": "0.7-0.8mm",
+          "sparkPlugType": "NGK CR8E or equivalent",
+          "fuseRating": "15A main fuse",
+          "ignitionSystem": "CDI / ECU controlled (2019+)",
+          "starterType": "Electric starter with relay",
+          "oilCapacity": "1.2L (with filter change)",
+          "valveClearance": "0.08mm intake / 0.10mm exhaust (cold)",
+          "hasFuelPumpPrime": true,
+          "hasEngineImmobilizer": false,
+          "knownWeaknesses": ["Stator coil failure common", "Rectifier overheating", "Speedometer cable breakage"],
+          "commonSymptomsMapping": {
+            "no_crank": ["battery", "starter_relay", "starter_motor", "sidestand_switch", "clutch_switch"],
+            "slow_crank": ["battery", "ground_connection", "starter_motor"],
+            "crank_no_start": ["spark_plug", "ignition_coil", "fuel_pump", "crank_sensor", "ecu"],
+            "clicking": ["battery", "starter_relay", "starter_motor"],
+            "starts_then_dies": ["fuel_filter", "fuel_pump", "crank_sensor", "idle_air_control"]
+          }
+        }
+      ]
+    }
+  ]
+}

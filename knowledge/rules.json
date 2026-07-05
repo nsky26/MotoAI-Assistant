@@ -1,0 +1,195 @@
+{
+  "rules": [
+    {
+      "id": "rule_no_crank_check_battery",
+      "name": "No Crank — Check Battery First",
+      "priority": 1,
+      "category": "electrical",
+      "triggerSymptom": "engine_no_crank",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "engine_no_crank" }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "battery_inspection", "reason": "Battery is the most common cause of no-crank. Check voltage first." },
+        { "type": "update_confidence", "part": "battery", "delta": 0.3 },
+        { "type": "update_confidence", "part": "main_fuse", "delta": 0.2 }
+      ],
+      "description": "If engine does not crank, battery and main fuse are the most likely causes"
+    },
+    {
+      "id": "rule_clicking_battery_low",
+      "name": "Clicking Sound — Battery Low",
+      "priority": 1,
+      "triggerSymptom": "clicking_sound",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "clicking_sound" }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "battery_inspection", "reason": "Rapid clicking usually indicates low battery voltage" },
+        { "type": "suggest_inspection", "target": "starter_relay_inspection", "reason": "Single click may indicate bad relay" },
+        { "type": "update_confidence", "part": "battery", "delta": 0.35 },
+        { "type": "update_confidence", "part": "starter_relay", "delta": 0.25 }
+      ],
+      "description": "Clicking sound points to low battery or faulty starter relay"
+    },
+    {
+      "id": "rule_cranks_no_start_check_spark",
+      "name": "Cranks But No Start — Check Ignition",
+      "priority": 1,
+      "triggerSymptom": "engine_cranks_no_start",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "engine_cranks_no_start" }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "spark_plug_inspection", "reason": "Check spark plug condition and spark first" },
+        { "type": "suggest_inspection", "target": "fuel_pump_inspection", "reason": "Check fuel pump prime sound" },
+        { "type": "update_confidence", "part": "spark_plug", "delta": 0.2 },
+        { "type": "update_confidence", "part": "ignition_coil", "delta": 0.15 },
+        { "type": "update_confidence", "part": "fuel_pump", "delta": 0.15 },
+        { "type": "update_confidence", "part": "crank_position_sensor", "delta": 0.1 }
+      ],
+      "description": "Engine cranking but not starting suggests ignition or fuel issue"
+    },
+    {
+      "id": "rule_no_spark_check_coil",
+      "name": "No Spark — Check Ignition Coil",
+      "priority": 2,
+      "triggerSymptom": "weak_spark",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "weak_spark" }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "ignition_coil_inspection", "reason": "Weak spark often indicates failing ignition coil" },
+        { "type": "update_confidence", "part": "ignition_coil", "delta": 0.35 },
+        { "type": "update_confidence", "part": "spark_plug", "delta": 0.15 },
+        { "type": "update_confidence", "part": "crank_position_sensor", "delta": 0.1 }
+      ],
+      "description": "Weak or no spark suggests ignition coil or crank sensor issue"
+    },
+    {
+      "id": "rule_no_fuel_prime_check_pump",
+      "name": "No Fuel Prime — Check Fuel Pump",
+      "priority": 2,
+      "triggerSymptom": "no_fuel_pump_prime",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "no_fuel_pump_prime" }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "fuel_pump_inspection", "reason": "No prime sound indicates fuel pump or its circuit is failing" },
+        { "type": "update_confidence", "part": "fuel_pump", "delta": 0.4 },
+        { "type": "update_confidence", "part": "ecu", "delta": 0.1 },
+        { "type": "update_confidence", "part": "wiring_harness", "delta": 0.1 }
+      ],
+      "description": "Absent fuel pump prime sound indicates pump or electrical failure"
+    },
+    {
+      "id": "rule_starts_then_dies_fuel",
+      "name": "Starts Then Dies — Fuel Supply Issue",
+      "priority": 2,
+      "triggerSymptom": "engine_starts_then_dies",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "engine_starts_then_dies" }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "fuel_filter_inspection", "reason": "Engine starting briefly then dying often indicates restricted fuel flow" },
+        { "type": "suggest_inspection", "target": "fuel_pump_inspection", "reason": "Fuel pump may be failing under load" },
+        { "type": "update_confidence", "part": "fuel_filter", "delta": 0.3 },
+        { "type": "update_confidence", "part": "fuel_pump", "delta": 0.25 },
+        { "type": "update_confidence", "part": "crank_position_sensor", "delta": 0.15 }
+      ],
+      "description": "Engine starts but dies suggests fuel delivery problem"
+    },
+    {
+      "id": "rule_no_electrical_check_fuse",
+      "name": "No Electrical Power — Check Main Fuse",
+      "priority": 1,
+      "triggerSymptom": "no_electrical_power",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "no_electrical_power" }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "fuse_inspection", "reason": "Complete electrical failure usually means blown main fuse or dead battery" },
+        { "type": "update_confidence", "part": "main_fuse", "delta": 0.4 },
+        { "type": "update_confidence", "part": "battery", "delta": 0.3 }
+      ],
+      "description": "Total electrical failure points to main fuse or battery"
+    },
+    {
+      "id": "rule_slow_crank_battery",
+      "name": "Slow Crank — Weak Battery",
+      "priority": 1,
+      "triggerSymptom": "engine_cranks_slowly",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "engine_cranks_slowly" }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "battery_inspection", "reason": "Slow cranking is the classic sign of a weak battery" },
+        { "type": "suggest_inspection", "target": "voltage_regulator_inspection", "reason": "If battery is charged, regulator may be overcharging" },
+        { "type": "update_confidence", "part": "battery", "delta": 0.4 },
+        { "type": "update_confidence", "part": "starter_motor", "delta": 0.1 }
+      ],
+      "description": "Slow cranking strongly indicates weak battery"
+    },
+    {
+      "id": "rule_cel_check_sensors",
+      "name": "Check Engine Light — Read DTCs",
+      "priority": 3,
+      "triggerSymptom": "check_engine_light",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "check_engine_light" }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "ecu_inspection", "reason": "CEL indicates ECU has detected a fault — read diagnostic trouble codes" },
+        { "type": "update_confidence", "part": "crank_position_sensor", "delta": 0.2 },
+        { "type": "update_confidence", "part": "oxygen_sensor", "delta": 0.15 }
+      ],
+      "description": "Check engine light requires reading fault codes first"
+    },
+    {
+      "id": "rule_multiple_symptoms_wiring",
+      "name": "Multiple Electrical Symptoms — Wiring Issue",
+      "priority": 4,
+      "triggerSymptom": "multiple_electrical_issues",
+      "conditions": [
+        { "fact": "symptom_count", "operator": "gte", "value": 3 },
+        { "fact": "electrical_symptom_count", "operator": "gte", "value": 2 }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "wiring_harness_inspection", "reason": "Multiple unrelated electrical issues often point to a common wiring harness fault" },
+        { "type": "update_confidence", "part": "wiring_harness", "delta": 0.3 },
+        { "type": "update_confidence", "part": "ecu", "delta": 0.15 }
+      ],
+      "description": "Multiple electrical issues simultaneously suggest wiring harness failure"
+    },
+    {
+      "id": "rule_battery_confirmed_check_charge",
+      "name": "Battery Low — Check Charging System",
+      "priority": 3,
+      "triggerSymptom": "battery_not_charging",
+      "conditions": [
+        { "fact": "symptom_present", "operator": "eq", "value": "battery_not_charging" },
+        { "fact": "battery_voltage", "operator": "lt", "value": 12.4 }
+      ],
+      "actions": [
+        { "type": "suggest_inspection", "target": "voltage_regulator_inspection", "reason": "Battery not holding charge suggests charging system failure" },
+        { "type": "update_confidence", "part": "voltage_regulator", "delta": 0.35 },
+        { "type": "update_confidence", "part": "alternator_stator", "delta": 0.2 }
+      ],
+      "description": "Low battery combined with charging symptom suggests regulator failure"
+    },
+    {
+      "id": "rule_diagnosis_complete_critical",
+      "name": "Critical Issue — Recommend Professional",
+      "priority": 10,
+      "triggerSymptom": "any_critical",
+      "conditions": [
+        { "fact": "has_critical_symptom", "operator": "eq", "value": true }
+      ],
+      "actions": [
+        { "type": "stop_diagnosis", "reason": "Critical issue detected. Recommend professional service." },
+        { "type": "set_severity", "level": "CRITICAL" }
+      ],
+      "description": "If any critical symptom is present, halt DIY diagnosis and recommend a mechanic"
+    }
+  ]
+}

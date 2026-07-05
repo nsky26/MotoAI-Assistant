@@ -1,0 +1,178 @@
+{
+  "protocols": [
+    {
+      "id": "battery_inspection",
+      "name": "Battery Inspection",
+      "partId": "battery",
+      "estimatedMinutes": 5,
+      "steps": [
+        { "order": 1, "instruction": "Check battery voltage with multimeter across terminals", "expected": "12.4V - 12.8V (resting)", "failCondition": "below 12.4V" },
+        { "order": 2, "instruction": "Inspect battery terminals for corrosion (white/green deposits)", "expected": "Clean, no corrosion", "failCondition": "visible_corrosion" },
+        { "order": 3, "instruction": "Check terminal tightness — try to move by hand", "expected": "No movement", "failCondition": "loose_terminal" },
+        { "order": 4, "instruction": "Inspect battery case for cracks, bulges, or leaks", "expected": "No physical damage", "failCondition": "cracked_case" },
+        { "order": 5, "instruction": "Perform load test — crank engine while monitoring voltage", "expected": "Voltage stays above 10V during crank", "failCondition": "drops_below_10v" }
+      ],
+      "passThreshold": 4,
+      "nextProtocolOnPass": null,
+      "nextProtocolOnFail": "battery_replacement"
+    },
+    {
+      "id": "starter_relay_inspection",
+      "name": "Starter Relay Inspection",
+      "partId": "starter_relay",
+      "estimatedMinutes": 10,
+      "steps": [
+        { "order": 1, "instruction": "Locate starter relay near battery. Listen for click when start button pressed", "expected": "Audible click", "failCondition": "no_click" },
+        { "order": 2, "instruction": "Check input voltage at relay terminals with multimeter", "expected": "Battery voltage (12V+)", "failCondition": "no_voltage" },
+        { "order": 3, "instruction": "Check output voltage at relay when start button pressed", "expected": "Same as battery voltage", "failCondition": "no_output" },
+        { "order": 4, "instruction": "Test relay by applying 12V directly to coil terminals", "expected": "Relay clicks, continuity across switch terminals", "failCondition": "no_continuity" }
+      ],
+      "passThreshold": 3,
+      "nextProtocolOnPass": "starter_motor_inspection",
+      "nextProtocolOnFail": "starter_relay_replacement"
+    },
+    {
+      "id": "spark_plug_inspection",
+      "name": "Spark Plug Inspection",
+      "partId": "spark_plug",
+      "estimatedMinutes": 15,
+      "steps": [
+        { "order": 1, "instruction": "Remove spark plug cap and clean area around plug", "expected": "Clean, dry surface", "failCondition": null },
+        { "order": 2, "instruction": "Remove spark plug using spark plug socket", "expected": "Comes out without excessive force", "failCondition": "seized_plug" },
+        { "order": 3, "instruction": "Inspect electrode for carbon fouling (black, dry soot)", "expected": "Light tan/grey color", "failCondition": "carbon_fouling" },
+        { "order": 4, "instruction": "Inspect for oil fouling (wet, black oil deposits)", "expected": "Dry electrode", "failCondition": "oil_fouling" },
+        { "order": 5, "instruction": "Check electrode gap with feeler gauge", "expected": "0.7-0.8mm (Pulsar 150)", "failCondition": "gap_out_of_spec" },
+        { "order": 6, "instruction": "Check for cracked porcelain insulator", "expected": "No cracks", "failCondition": "cracked" },
+        { "order": 7, "instruction": "Perform spark test — ground plug to engine, crank, observe spark", "expected": "Strong blue spark", "failCondition": "weak_or_no_spark" }
+      ],
+      "passThreshold": 6,
+      "nextProtocolOnPass": null,
+      "nextProtocolOnFail": "spark_plug_replacement"
+    },
+    {
+      "id": "fuel_pump_inspection",
+      "name": "Fuel Pump Inspection",
+      "partId": "fuel_pump",
+      "estimatedMinutes": 10,
+      "steps": [
+        { "order": 1, "instruction": "Turn ignition ON and listen for fuel pump prime sound from tank area", "expected": "2-second hum from fuel tank", "failCondition": "no_sound_or_continuous" },
+        { "order": 2, "instruction": "Check fuel pump fuse in fuse box", "expected": "Fuse intact", "failCondition": "blown_fuse" },
+        { "order": 3, "instruction": "Check fuel pump relay operation (swap with identical relay if available)", "expected": "Relay clicks, pump primes", "failCondition": "no_change" },
+        { "order": 4, "instruction": "Disconnect fuel line at injector end, turn ignition ON, check for fuel flow", "expected": "Fuel sprays/pulses out", "failCondition": "no_fuel_flow" },
+        { "order": 5, "instruction": "Measure fuel pump resistance with multimeter", "expected": "2-5 ohms", "failCondition": "open_circuit" }
+      ],
+      "passThreshold": 4,
+      "nextProtocolOnPass": null,
+      "nextProtocolOnFail": "fuel_pump_replacement"
+    },
+    {
+      "id": "fuse_inspection",
+      "name": "Main Fuse Inspection",
+      "partId": "main_fuse",
+      "estimatedMinutes": 3,
+      "steps": [
+        { "order": 1, "instruction": "Locate main fuse in fuse box near battery", "expected": "Fuse location known", "failCondition": null },
+        { "order": 2, "instruction": "Remove fuse and inspect for broken wire inside", "expected": "Continuous metal strip", "failCondition": "blown" },
+        { "order": 3, "instruction": "Test continuity across fuse with multimeter", "expected": "Near-zero resistance", "failCondition": "open_circuit" },
+        { "order": 4, "instruction": "Inspect fuse holder for corrosion or damage", "expected": "Clean, tight fit", "failCondition": "corroded" }
+      ],
+      "passThreshold": 3,
+      "nextProtocolOnPass": "battery_inspection",
+      "nextProtocolOnFail": "fuse_replacement"
+    },
+    {
+      "id": "ignition_coil_inspection",
+      "name": "Ignition Coil Inspection",
+      "partId": "ignition_coil",
+      "estimatedMinutes": 15,
+      "steps": [
+        { "order": 1, "instruction": "Remove fuel tank to access coil (if necessary)", "expected": "Access gained", "failCondition": null },
+        { "order": 2, "instruction": "Disconnect primary connector and measure primary winding resistance", "expected": "0.5-2.0 ohms", "failCondition": "open_or_short" },
+        { "order": 3, "instruction": "Measure secondary winding resistance between spark plug terminal and primary", "expected": "5-15 k-ohms", "failCondition": "out_of_range" },
+        { "order": 4, "instruction": "Inspect coil casing for cracks or burn marks", "expected": "Clean casing", "failCondition": "visible_damage" },
+        { "order": 5, "instruction": "Check spark plug cap resistance", "expected": "5k ohms (resistor type)", "failCondition": "open_circuit" }
+      ],
+      "passThreshold": 4,
+      "nextProtocolOnPass": "crank_sensor_inspection",
+      "nextProtocolOnFail": "ignition_coil_replacement"
+    },
+    {
+      "id": "crank_sensor_inspection",
+      "name": "Crank Position Sensor Inspection",
+      "partId": "crank_position_sensor",
+      "estimatedMinutes": 10,
+      "steps": [
+        { "order": 1, "instruction": "Locate crank position sensor on left side of engine near stator cover", "expected": "Sensor accessible", "failCondition": null },
+        { "order": 2, "instruction": "Disconnect sensor connector and inspect pins for corrosion", "expected": "Clean, no corrosion", "failCondition": "corroded_pins" },
+        { "order": 3, "instruction": "Measure sensor resistance between signal pins", "expected": "100-500 ohms (Pulsar 150)", "failCondition": "open_or_short" },
+        { "order": 4, "instruction": "Check air gap between sensor and rotor (if adjustable)", "expected": "0.5-1.5mm", "failCondition": "gap_wrong" },
+        { "order": 5, "instruction": "Check wiring continuity from sensor to ECU connector", "expected": "Continuity present", "failCondition": "broken_wire" }
+      ],
+      "passThreshold": 4,
+      "nextProtocolOnPass": null,
+      "nextProtocolOnFail": "crank_sensor_replacement"
+    },
+    {
+      "id": "voltage_regulator_inspection",
+      "name": "Voltage Regulator Inspection",
+      "partId": "voltage_regulator",
+      "estimatedMinutes": 10,
+      "steps": [
+        { "order": 1, "instruction": "Measure battery voltage at rest (engine off)", "expected": "12.4V - 12.8V", "failCondition": "below_12v" },
+        { "order": 2, "instruction": "Start engine and measure battery voltage at 2000 RPM", "expected": "13.5V - 14.5V", "failCondition": "below_13v_or_above_15v" },
+        { "order": 3, "instruction": "Check regulator ground connection for corrosion", "expected": "Clean, tight ground", "failCondition": "loose_or_corroded" },
+        { "order": 4, "instruction": "Inspect regulator connector for burnt/melted pins", "expected": "Clean connector", "failCondition": "burnt_pins" }
+      ],
+      "passThreshold": 3,
+      "nextProtocolOnPass": null,
+      "nextProtocolOnFail": "voltage_regulator_replacement"
+    },
+    {
+      "id": "fuel_filter_inspection",
+      "name": "Fuel Filter Inspection",
+      "partId": "fuel_filter",
+      "estimatedMinutes": 8,
+      "steps": [
+        { "order": 1, "instruction": "Locate fuel filter along fuel line between tank and injector", "expected": "Filter visible", "failCondition": null },
+        { "order": 2, "instruction": "Visually inspect filter element — look for discoloration or debris", "expected": "Clear/light color", "failCondition": "dark_or_dirty" },
+        { "order": 3, "instruction": "Check for fuel flow restriction — squeeze fuel line near filter", "expected": "Firm pressure, fuel flows freely", "failCondition": "hard_or_empty" },
+        { "order": 4, "instruction": "Check for water contamination — look for separation in filter", "expected": "No water visible", "failCondition": "water_present" }
+      ],
+      "passThreshold": 3,
+      "nextProtocolOnPass": null,
+      "nextProtocolOnFail": "fuel_filter_replacement"
+    },
+    {
+      "id": "wiring_harness_inspection",
+      "name": "Wiring Harness Inspection",
+      "partId": "wiring_harness",
+      "estimatedMinutes": 20,
+      "steps": [
+        { "order": 1, "instruction": "Visual inspection of main harness along frame for chafing or damage", "expected": "Insulation intact", "failCondition": "chafed_or_exposed" },
+        { "order": 2, "instruction": "Check ground connections at frame and engine for corrosion", "expected": "Clean, tight ground", "failCondition": "corroded_or_loose" },
+        { "order": 3, "instruction": "Check main connectors (ECU, battery, ignition) for corrosion or loose pins", "expected": "Clean, fully seated", "failCondition": "corroded_or_loose" },
+        { "order": 4, "instruction": "Check for rodent damage or melted sections near exhaust", "expected": "No damage", "failCondition": "rodent_or_heat_damage" },
+        { "order": 5, "instruction": "Perform voltage drop test on main power and ground circuits", "expected": "Voltage drop < 0.2V", "failCondition": "drop_above_0_5v" }
+      ],
+      "passThreshold": 4,
+      "nextProtocolOnPass": null,
+      "nextProtocolOnFail": "wiring_harness_repair"
+    },
+    {
+      "id": "ecu_inspection",
+      "name": "ECU Inspection",
+      "partId": "ecu",
+      "estimatedMinutes": 15,
+      "steps": [
+        { "order": 1, "instruction": "Locate ECU and check all connectors are fully seated", "expected": "Connectors locked", "failCondition": "loose_connector" },
+        { "order": 2, "instruction": "Check ECU pins for corrosion or bent pins", "expected": "Clean, straight pins", "failCondition": "corroded_or_bent" },
+        { "order": 3, "instruction": "Check ECU power supply with multimeter (pin 1: 12V)", "expected": "11-14V present", "failCondition": "no_power" },
+        { "order": 4, "instruction": "Check ECU ground continuity", "expected": "Near-zero resistance", "failCondition": "open_ground" },
+        { "order": 5, "instruction": "Read diagnostic trouble codes using blink method or diagnostic tool", "expected": "No codes or expected codes", "failCondition": "unexpected_codes" }
+      ],
+      "passThreshold": 4,
+      "nextProtocolOnPass": null,
+      "nextProtocolOnFail": "ecu_replacement"
+    }
+  ]
+}

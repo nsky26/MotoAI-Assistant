@@ -1,0 +1,149 @@
+{
+  "workflows": [
+    {
+      "id": "battery_replacement",
+      "name": "Battery Replacement",
+      "partId": "battery",
+      "difficulty": "beginner",
+      "estimatedMinutes": 20,
+      "tools": ["8mm_wrench", "10mm_wrench", "socket_set", "wire_brush", "dielectric_grease"],
+      "reassemblySteps": true,
+      "steps": [
+        { "order": 1, "instruction": "Put on safety glasses and insulated gloves", "dependency": null, "verificationRequired": false },
+        { "order": 2, "instruction": "Turn ignition OFF and remove key from ignition", "dependency": null, "verificationRequired": false },
+        { "order": 3, "instruction": "Locate battery under seat. Remove seat using seat lock/key", "dependency": null, "verificationRequired": false },
+        { "order": 4, "instruction": "Identify negative terminal (black, marked -). Loosen bolt with 8mm or 10mm wrench", "dependency": null, "verificationRequired": true },
+        { "order": 5, "instruction": "Disconnect negative cable and secure it away from battery", "dependency": "step_4_verified", "verificationRequired": true },
+        { "order": 6, "instruction": "Identify positive terminal (red, marked +). Loosen bolt and disconnect", "dependency": "step_5_verified", "verificationRequired": true },
+        { "order": 7, "instruction": "Remove battery hold-down clamp or strap", "dependency": "step_6_verified", "verificationRequired": false },
+        { "order": 8, "instruction": "Lift old battery out carefully (keep upright, acid can spill)", "dependency": "step_7_verified", "verificationRequired": false },
+        { "order": 9, "instruction": "Clean terminal clamps with wire brush until shiny", "dependency": "step_8_verified", "verificationRequired": false },
+        { "order": 10, "instruction": "Place new battery in tray. Ensure positive (+) and negative (-) match original orientation", "dependency": "step_9_verified", "verificationRequired": true },
+        { "order": 11, "instruction": "Reinstall hold-down clamp", "dependency": "step_10_verified", "verificationRequired": false },
+        { "order": 12, "instruction": "Apply thin layer of dielectric grease to both terminals", "dependency": null, "verificationRequired": false },
+        { "order": 13, "instruction": "Connect POSITIVE terminal first (red). Tighten bolt firmly", "dependency": "step_10_verified", "verificationRequired": true },
+        { "order": 14, "instruction": "Connect NEGATIVE terminal second (black). Tighten bolt firmly", "dependency": "step_13_verified", "verificationRequired": true },
+        { "order": 15, "instruction": "Verify connections are tight by gently pulling each cable", "dependency": "step_14_verified", "verificationRequired": true },
+        { "order": 16, "instruction": "Replace seat and secure with lock", "dependency": "step_15_verified", "verificationRequired": false },
+        { "order": 17, "instruction": "Turn ignition ON. Check dash lights illuminate. Press start to test", "dependency": "step_16_verified", "verificationRequired": true }
+      ]
+    },
+    {
+      "id": "spark_plug_replacement",
+      "name": "Spark Plug Replacement",
+      "partId": "spark_plug",
+      "difficulty": "intermediate",
+      "estimatedMinutes": 30,
+      "tools": ["spark_plug_socket", "ratchet", "feeler_gauge", "torque_wrench", "anti_seize_compound"],
+      "reassemblySteps": true,
+      "steps": [
+        { "order": 1, "instruction": "Ensure engine is cold. Turn ignition OFF", "dependency": null, "verificationRequired": false },
+        { "order": 2, "instruction": "Remove seat and fuel tank (2 bolts at front, 1 at rear, disconnect fuel line)", "dependency": null, "verificationRequired": true },
+        { "order": 3, "instruction": "Disconnect spark plug cap by pulling firmly on the cap body (not the wire)", "dependency": "step_2_verified", "verificationRequired": true },
+        { "order": 4, "instruction": "Clean area around spark plug using compressed air or brush", "dependency": "step_3_verified", "verificationRequired": false },
+        { "order": 5, "instruction": "Remove spark plug using spark plug socket and ratchet (counter-clockwise)", "dependency": "step_4_verified", "verificationRequired": true },
+        { "order": 6, "instruction": "Compare old plug with new — check electrode color for diagnostic clues", "dependency": "step_5_verified", "verificationRequired": false },
+        { "order": 7, "instruction": "Check gap on new plug using feeler gauge. Pulsar 150 spec: 0.7-0.8mm", "dependency": null, "verificationRequired": true },
+        { "order": 8, "instruction": "Apply small amount of anti-seize to spark plug threads", "dependency": "step_7_verified", "verificationRequired": false },
+        { "order": 9, "instruction": "Install new plug by hand first (prevent cross-threading), then tighten to 12-15 Nm", "dependency": "step_8_verified", "verificationRequired": true },
+        { "order": 10, "instruction": "Reinstall spark plug cap until it clicks onto the plug terminal", "dependency": "step_9_verified", "verificationRequired": true },
+        { "order": 11, "instruction": "Reinstall fuel tank, reconnect fuel line, tighten bolts", "dependency": "step_10_verified", "verificationRequired": true },
+        { "order": 12, "instruction": "Replace seat. Start engine and verify smooth idle", "dependency": "step_11_verified", "verificationRequired": true }
+      ]
+    },
+    {
+      "id": "fuse_replacement",
+      "name": "Fuse Replacement",
+      "partId": "main_fuse",
+      "difficulty": "beginner",
+      "estimatedMinutes": 5,
+      "tools": ["pliers", "replacement_fuse"],
+      "reassemblySteps": false,
+      "steps": [
+        { "order": 1, "instruction": "Turn ignition OFF", "dependency": null, "verificationRequired": false },
+        { "order": 2, "instruction": "Remove seat and locate fuse box near battery", "dependency": null, "verificationRequired": false },
+        { "order": 3, "instruction": "Open fuse box cover. Identify main fuse (usually 15A or 20A)", "dependency": "step_2_verified", "verificationRequired": false },
+        { "order": 4, "instruction": "Remove blown fuse using pliers or fuse puller", "dependency": "step_3_verified", "verificationRequired": true },
+        { "order": 5, "instruction": "Install new fuse of exact same amperage rating", "dependency": "step_4_verified", "verificationRequired": true },
+        { "order": 6, "instruction": "Close fuse box cover. Check if electrical systems power on", "dependency": "step_5_verified", "verificationRequired": true },
+        { "order": 7, "instruction": "If new fuse also blows, there is a short circuit — stop and consult a professional", "dependency": null, "verificationRequired": false }
+      ]
+    },
+    {
+      "id": "starter_relay_replacement",
+      "name": "Starter Relay Replacement",
+      "partId": "starter_relay",
+      "difficulty": "intermediate",
+      "estimatedMinutes": 15,
+      "tools": ["screwdriver", "10mm_wrench"],
+      "reassemblySteps": true,
+      "steps": [
+        { "order": 1, "instruction": "Turn ignition OFF and remove battery negative terminal for safety", "dependency": null, "verificationRequired": true },
+        { "order": 2, "instruction": "Locate starter relay in the relay box near battery", "dependency": "step_1_verified", "verificationRequired": false },
+        { "order": 3, "instruction": "Unplug the two small signal wires from relay", "dependency": "step_2_verified", "verificationRequired": false },
+        { "order": 4, "instruction": "Remove the two large terminal nuts and disconnect battery and starter wires", "dependency": "step_3_verified", "verificationRequired": false },
+        { "order": 5, "instruction": "Remove old relay and install new relay in same orientation", "dependency": "step_4_verified", "verificationRequired": true },
+        { "order": 6, "instruction": "Reconnect large wires in correct positions. Tighten nuts securely", "dependency": "step_5_verified", "verificationRequired": true },
+        { "order": 7, "instruction": "Reconnect small signal wires", "dependency": "step_6_verified", "verificationRequired": false },
+        { "order": 8, "instruction": "Reconnect battery negative terminal. Test start button", "dependency": "step_7_verified", "verificationRequired": true }
+      ]
+    },
+    {
+      "id": "fuel_filter_replacement",
+      "name": "Fuel Filter Replacement",
+      "partId": "fuel_filter",
+      "difficulty": "intermediate",
+      "estimatedMinutes": 20,
+      "tools": ["screwdriver", "fuel_line_clamp", "container", "new_fuel_filter"],
+      "reassemblySteps": false,
+      "steps": [
+        { "order": 1, "instruction": "Turn ignition OFF. Ensure engine is cool", "dependency": null, "verificationRequired": false },
+        { "order": 2, "instruction": "Remove left side panel to access fuel line", "dependency": null, "verificationRequired": false },
+        { "order": 3, "instruction": "Clamp fuel line on both sides of filter to prevent fuel spillage", "dependency": "step_2_verified", "verificationRequired": false },
+        { "order": 4, "instruction": "Place container below to catch drips. Remove old filter by loosening hose clamps", "dependency": "step_3_verified", "verificationRequired": true },
+        { "order": 5, "instruction": "Install new filter matching direction arrow (points toward injector/engine)", "dependency": "step_4_verified", "verificationRequired": true },
+        { "order": 6, "instruction": "Tighten hose clamps securely. Remove fuel line clamps", "dependency": "step_5_verified", "verificationRequired": true },
+        { "order": 7, "instruction": "Turn ignition ON (do not start) to prime fuel system. Check for leaks", "dependency": "step_6_verified", "verificationRequired": true },
+        { "order": 8, "instruction": "Start engine and check for leaks again. Replace side panel", "dependency": "step_7_verified", "verificationRequired": true }
+      ]
+    },
+    {
+      "id": "wiring_harness_repair",
+      "name": "Wiring Harness Repair",
+      "partId": "wiring_harness",
+      "difficulty": "expert",
+      "estimatedMinutes": 60,
+      "tools": ["multimeter", "crimping_tool", "soldering_iron", "heat_shrink", "electrical_tape", "zip_ties"],
+      "reassemblySteps": true,
+      "steps": [
+        { "order": 1, "instruction": "Disconnect battery negative terminal", "dependency": null, "verificationRequired": true },
+        { "order": 2, "instruction": "Remove fuel tank and side panels to access wiring harness", "dependency": "step_1_verified", "verificationRequired": false },
+        { "order": 3, "instruction": "Locate damaged section of wiring harness", "dependency": "step_2_verified", "verificationRequired": true },
+        { "order": 4, "instruction": "Cut out damaged section of wire. Strip insulation back 10mm on both ends", "dependency": "step_3_verified", "verificationRequired": true },
+        { "order": 5, "instruction": "Splice in new wire of same gauge using solder and heat shrink tubing", "dependency": "step_4_verified", "verificationRequired": true },
+        { "order": 6, "instruction": "Wrap repaired section with electrical tape. Secure harness with zip ties", "dependency": "step_5_verified", "verificationRequired": false },
+        { "order": 7, "instruction": "Reconnect battery and test affected circuit", "dependency": "step_6_verified", "verificationRequired": true },
+        { "order": 8, "instruction": "Reinstall fuel tank and panels. Verify all electrical functions", "dependency": "step_7_verified", "verificationRequired": true }
+      ]
+    },
+    {
+      "id": "crank_sensor_replacement",
+      "name": "Crank Position Sensor Replacement",
+      "partId": "crank_position_sensor",
+      "difficulty": "intermediate",
+      "estimatedMinutes": 25,
+      "tools": ["10mm_wrench", "screwdriver", "multimeter"],
+      "reassemblySteps": true,
+      "steps": [
+        { "order": 1, "instruction": "Disconnect battery negative terminal", "dependency": null, "verificationRequired": true },
+        { "order": 2, "instruction": "Remove left side engine cover (stator cover)", "dependency": "step_1_verified", "verificationRequired": false },
+        { "order": 3, "instruction": "Disconnect sensor electrical connector", "dependency": "step_2_verified", "verificationRequired": false },
+        { "order": 4, "instruction": "Remove sensor mounting bolt (10mm). Remove old sensor", "dependency": "step_3_verified", "verificationRequired": true },
+        { "order": 5, "instruction": "Clean sensor mounting surface. Install new sensor with specified gap", "dependency": "step_4_verified", "verificationRequired": true },
+        { "order": 6, "instruction": "Tighten mounting bolt. Reconnect electrical connector", "dependency": "step_5_verified", "verificationRequired": true },
+        { "order": 7, "instruction": "Reinstall left side cover. Reconnect battery", "dependency": "step_6_verified", "verificationRequired": false },
+        { "order": 8, "instruction": "Start engine and verify no check engine light", "dependency": "step_7_verified", "verificationRequired": true }
+      ]
+    }
+  ]
+}

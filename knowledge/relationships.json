@@ -1,0 +1,24 @@
+{
+  "relationships": [
+    { "id": "battery_to_starter", "source": "battery", "target": "starter_relay", "type": "powers", "description": "Battery provides power to starter relay" },
+    { "id": "relay_to_motor", "source": "starter_relay", "target": "starter_motor", "type": "switches", "description": "Starter relay switches current to starter motor" },
+    { "id": "battery_to_fuse", "source": "battery", "target": "main_fuse", "type": "protects", "description": "Main fuse protects battery circuit" },
+    { "id": "fuse_to_relay", "source": "main_fuse", "target": "starter_relay", "type": "feeds", "description": "Fuse feeds power to starter relay circuit" },
+    { "id": "cps_to_ecu", "source": "crank_position_sensor", "target": "ecu", "type": "signals", "description": "Crank sensor sends timing signal to ECU" },
+    { "id": "ecu_to_coil", "source": "ecu", "target": "ignition_coil", "type": "triggers", "description": "ECU triggers ignition coil firing" },
+    { "id": "coil_to_plug", "source": "ignition_coil", "target": "spark_plug", "type": "fires", "description": "Ignition coil fires spark plug" },
+    { "id": "battery_to_ecu", "source": "battery", "target": "ecu", "type": "powers", "description": "Battery powers ECU for operation" },
+    { "id": "battery_to_coil", "source": "battery", "target": "ignition_coil", "type": "powers", "description": "Battery supplies primary voltage to coil" },
+    { "id": "fuel_pump_to_filter", "source": "fuel_pump", "target": "fuel_filter", "type": "feeds", "description": "Fuel pump pushes fuel through filter" },
+    { "id": "filter_to_injector", "source": "fuel_filter", "target": "fuel_injector", "type": "feeds", "description": "Filtered fuel flows to injector" },
+    { "id": "ecu_to_fuel_pump", "source": "ecu", "target": "fuel_pump", "type": "controls", "description": "ECU controls fuel pump relay" },
+    { "id": "wiring_to_all", "source": "wiring_harness", "target": "ecu", "type": "connects", "description": "Wiring harness connects ECU to all components" },
+    { "id": "wiring_to_sensors", "source": "wiring_harness", "target": "crank_position_sensor", "type": "connects", "description": "Wiring harness routes sensor signals" },
+    { "id": "alternator_to_regulator", "source": "alternator_stator", "target": "voltage_regulator", "type": "feeds", "description": "Stator output feeds voltage regulator" },
+    { "id": "regulator_to_battery", "source": "voltage_regulator", "target": "battery", "type": "charges", "description": "Regulator charges battery" },
+    { "id": "battery_to_lights", "source": "battery", "target": "headlight", "type": "powers", "description": "Battery powers headlight" },
+    { "id": "ignition_to_relay", "source": "ignition_switch", "target": "starter_relay", "type": "activates", "description": "Ignition switch activates starter relay when turned to start" },
+    { "id": "plug_to_combustion", "source": "spark_plug", "target": "combustion_chamber", "type": "ignites", "description": "Spark plug ignites air-fuel mixture" },
+    { "id": "pump_to_tank", "source": "fuel_tank", "target": "fuel_pump", "type": "contains", "description": "Fuel tank contains fuel pump assembly" }
+  ]
+}
