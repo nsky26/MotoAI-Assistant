@@ -1,0 +1,6 @@
+[
+  { "modelId": "shine", "displacement": "123.94 cc", "configuration": "Single cylinder, 4-stroke", "cooling": "Air Cooled", "fueling": "Fuel Injection" },
+  { "modelId": "splendor", "displacement": "97.2 cc", "configuration": "Single cylinder, 4-stroke, OHC", "cooling": "Air Cooled", "fueling": "Carbureted / FI" },
+  { "modelId": "pulsar", "displacement": "149.5 cc", "configuration": "Single cylinder, 4-stroke, Twin Spark", "cooling": "Air Cooled", "fueling": "Carbureted / FI" },
+  { "modelId": "classic350", "displacement": "349 cc", "configuration": "Single cylinder, 4-stroke, SOHC", "cooling": "Air-Oil Cooled", "fueling": "Electronic Fuel Injection" }
+]

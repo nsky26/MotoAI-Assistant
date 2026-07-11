@@ -1,219 +1,195 @@
-/**
- * MotoAI Rule Engine (Phase 3.2)
- *
- * Loads rules from knowledge/rules.json, evaluates conditions against
- * the current facts (symptoms, observations, measurements), fires matching
- * rules, and returns suggested inspections, confidence updates, and stop signals.
- *
- * Pure TypeScript — no UI, no React, no Firebase.
- * Unit-test friendly: all inputs are explicit, no side effects.
- */
-import type { Rule, RuleCondition, EvaluationResult } from "./knowledgeTypes";
-import { getRules as getOfflineRules, isInitialized } from "./offlineStorage";
+import rulesData from "../../knowledge/rules.json";
+import failuresData from "../../knowledge/failures.json";
+import partsData from "../../knowledge/parts.json";
+import workflowsData from "../../knowledge/workflows.json";
+import toolsData from "../../knowledge/tools.json";
+import costsData from "../../knowledge/repair_costs.json";
+import maintenanceData from "../../knowledge/maintenance.json";
 
-// ---------------------------------------------------------------------------
-// Knowledge Loader
-// ---------------------------------------------------------------------------
+import type { Diagnosis, Mechanic } from "../types";
 
-let _rules: Rule[] | null = null;
-
-/**
- * Loads rules from the knowledge base.
- * Caches in memory after first load.
- */
-export async function loadRules(): Promise<Rule[]> {
-  if (_rules) return _rules;
-  if (isInitialized()) {
-    const offlineRules = getOfflineRules();
-    if (offlineRules && offlineRules.length > 0) {
-      _rules = offlineRules;
-      return _rules;
-    }
-  }
-  try {
-    const response = await fetch("/knowledge/rules.json");
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    _rules = data.rules as Rule[];
-    return _rules;
-  } catch (err) {
-    console.warn("ruleEngine: Failed to load rules.json, using inline fallback:", err);
-    _rules = getDefaultRules();
-    return _rules;
-  }
+export interface RuleCondition {
+  type: "AND" | "OR" | "NOT" | "symptom";
+  id?: string;
+  rules?: RuleCondition[];
+  rule?: RuleCondition;
 }
 
-/**
- * Evaluates a single condition against the current facts.
- *
- * @param condition - The condition to evaluate
- * @param facts - Key-value map of current known facts
- * @returns True if the condition is satisfied
- */
-export function evaluateCondition(condition: RuleCondition, facts: Record<string, unknown>): boolean {
-  // Special handling for symptom_present to support multiple simultaneous symptoms
-  if (condition.fact === "symptom_present") {
-    const presentSymptoms = facts["symptoms_set"] as Set<string> | undefined;
-    if (presentSymptoms) {
-      if (condition.operator === "eq") {
-        return presentSymptoms.has(condition.value as string);
+export interface Rule {
+  id: string;
+  failureId: string;
+  condition: RuleCondition;
+  confidenceModifier: number;
+}
+
+export interface FailureMode {
+  id: string;
+  name: string;
+  partId: string;
+  severity: "LOW" | "MEDIUM" | "HIGH";
+  prior: number;
+  description: string;
+}
+
+// Evaluate condition recursively
+function evaluateCondition(condition: RuleCondition, activeSymptoms: string[]): boolean {
+  if (condition.type === "symptom") {
+    return activeSymptoms.includes(condition.id || "");
+  }
+  if (condition.type === "AND") {
+    if (!condition.rules || condition.rules.length === 0) return false;
+    return condition.rules.every(r => evaluateCondition(r, activeSymptoms));
+  }
+  if (condition.type === "OR") {
+    if (!condition.rules || condition.rules.length === 0) return false;
+    return condition.rules.some(r => evaluateCondition(r, activeSymptoms));
+  }
+  if (condition.type === "NOT") {
+    if (!condition.rule) return false;
+    return !evaluateCondition(condition.rule, activeSymptoms);
+  }
+  return false;
+}
+
+// Map failure details into a standard Diagnosis output
+export function buildDiagnosisFromFailure(failureId: string, confidence: number): Diagnosis {
+  const failure = (failuresData as FailureMode[]).find(f => f.id === failureId);
+  const part = partsData.find(p => p.id === failure?.partId);
+  const workflow = workflowsData.find(w => w.failureId === failureId);
+  const costInfo = costsData.find(c => c.failureId === failureId);
+  const maint = maintenanceData.find(m => m.component === failure?.partId);
+
+  const steps = workflow ? [...workflow.inspection, ...workflow.repair] : ["Inspect and repair component."];
+  const severityLevel = failure?.severity || "MEDIUM";
+
+  // Build tools names
+  const requiredTools = workflow ? (toolsData
+    .filter(t => {
+      if (failureId === "dead_battery" || failureId === "corroded_terminals") {
+        return ["t_multimeter", "t_socket_wrench", "t_wire_brush"].includes(t.id);
       }
-      if (condition.operator === "neq") {
-        return !presentSymptoms.has(condition.value as string);
+      if (failureId === "carbon_fouled_plug") {
+        return ["t_spark_socket", "t_socket_wrench", "t_wire_brush"].includes(t.id);
       }
-    }
-  }
-
-  const factValue = facts[condition.fact];
-
-  switch (condition.operator) {
-    case "eq":
-      return factValue === condition.value;
-    case "neq":
-      return factValue !== condition.value;
-    case "gt":
-      return typeof factValue === "number" && typeof condition.value === "number" && factValue > condition.value;
-    case "gte":
-      return typeof factValue === "number" && typeof condition.value === "number" && factValue >= condition.value;
-    case "lt":
-      return typeof factValue === "number" && typeof condition.value === "number" && factValue < condition.value;
-    case "lte":
-      return typeof factValue === "number" && typeof condition.value === "number" && factValue <= condition.value;
-    default:
+      if (failureId === "loose_chain_slack") {
+        return ["t_socket_wrench"].includes(t.id);
+      }
+      if (failureId === "air_in_brake_lines") {
+        return ["t_brake_bleed", "t_socket_wrench"].includes(t.id);
+      }
+      if (failureId === "tire_puncture") {
+        return ["t_tire_reamer"].includes(t.id);
+      }
       return false;
-  }
-}
+    })
+    .map(t => t.name)) : ["General Toolkit"];
 
-/**
- * Evaluates all conditions of a rule against current facts.
- *
- * @param rule - The rule to evaluate
- * @param facts - Current known facts
- * @returns True if ALL conditions pass (AND logic)
- */
-export function evaluateRule(rule: Rule, facts: Record<string, unknown>): boolean {
-  for (const condition of rule.conditions) {
-    if (!evaluateCondition(condition, facts)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/**
- * Fires all matching rules sorted by priority.
- * Returns a consolidated EvaluationResult with all actions.
- *
- * @param rules - Array of loaded rules
- * @param facts - Current known facts (symptoms, measurements, observations)
- * @returns EvaluationResult with suggested inspections, confidence updates, etc.
- */
-export function fireRules(rules: Rule[], facts: Record<string, unknown>): EvaluationResult {
-  // Sort by priority (lower number = higher priority)
-  const sorted = [...rules].sort((a, b) => a.priority - b.priority);
-
-  const result: EvaluationResult = {
-    firedRules: [],
-    suggestedInspections: [],
-    confidenceUpdates: new Map<string, number>(),
-    shouldStop: false,
-    stopReason: null,
-    severity: null,
+  return {
+    id: failureId,
+    isCritical: severityLevel === "HIGH" && (failureId === "air_in_brake_lines" || failureId === "brake-failure"),
+    issue: failure?.name || "Unknown Issue",
+    confidence: Math.round(confidence),
+    description: failure?.description || "No description available.",
+    difficulty: failureId === "dead_battery" ? 3 : 2,
+    estimatedTime: failureId === "dead_battery" ? "15 mins" : failureId === "loose_chain_slack" ? "30 mins" : "20 mins",
+    diyCost: costInfo?.partCost ?? 0,
+    proEstimate: costInfo?.totalProCost ?? 80,
+    severityCode: failureId === "dead_battery" ? "B001" : "B002",
+    severityLevel,
+    aiRecommendation: `AI Diagnostic Rule Engine Match. Recommended preventative action: ${maint?.task || "Regular cleaning and inspections."}`,
+    steps,
+    estimatedCost: costInfo ? `$${costInfo.partCost} DIY / $${costInfo.totalProCost} Pro` : undefined,
+    costDetails: `Requires target spare parts and manual tools.`,
+    mechanics: [
+      {
+        name: "Apex Precision Moto",
+        rating: 4.9,
+        reviews: 214,
+        distance: "0.8 miles away"
+      },
+      {
+        name: "Nitro Diagnostics Hub",
+        rating: 4.7,
+        reviews: 128,
+        distance: "2.4 miles away"
+      }
+    ]
   };
+}
 
-  for (const rule of sorted) {
-    if (evaluateRule(rule, facts)) {
-      result.firedRules.push(rule.id);
+// Main Rule Engine Query Entry Point
+export function runSymptomDiagnosis(
+  activeSymptoms: string[],
+  brand?: string,
+  mileage?: number
+): Diagnosis[] {
+  const diagnoses: Diagnosis[] = [];
 
-      for (const action of rule.actions) {
-        switch (action.type) {
-          case "suggest_inspection":
-            if (action.target && !result.suggestedInspections.includes(action.target)) {
-              result.suggestedInspections.push(action.target);
-            }
-            break;
-
-          case "update_confidence":
-            if (action.part && action.delta) {
-              const current = result.confidenceUpdates.get(action.part) || 0;
-              result.confidenceUpdates.set(action.part, current + action.delta);
-            }
-            break;
-
-          case "stop_diagnosis":
-            result.shouldStop = true;
-            if (action.reason) result.stopReason = action.reason;
-            break;
-
-          case "set_severity":
-            if (action.level) result.severity = action.level;
-            break;
+  // Evaluate each registered rule
+  for (const rule of rulesData as Rule[]) {
+    const match = evaluateCondition(rule.condition, activeSymptoms);
+    if (match) {
+      // Prior-weighted Bayesian confidence update
+      const failure = (failuresData as FailureMode[]).find(f => f.id === rule.failureId);
+      const prior = failure ? failure.prior : 0.1;
+      
+      let modifier = rule.confidenceModifier;
+      
+      // Mileage-dependent weight shifts
+      if (mileage && mileage > 15000) {
+        if (rule.failureId === "loose_chain_slack" || rule.failureId === "tire_puncture") {
+          modifier *= 1.2;
         }
       }
+      
+      // Brand-specific adjustments
+      if (brand) {
+        const lowerBrand = brand.toLowerCase();
+        if ((lowerBrand.includes("royal") || lowerBrand.includes("enfield")) && rule.failureId === "loose_chain_slack") {
+          modifier *= 1.25;
+        }
+      }
+
+      // Calculate updated confidence probability
+      const updatedProb = prior + (1 - prior) * Math.min(1, modifier);
+      const confidencePercent = Math.min(99, updatedProb * 100);
+
+      // Support elimination checks (e.g. if chain is tight, we can't have loose chain!)
+      if (activeSymptoms.includes("s_soft_brake_lever") && rule.failureId === "dead_battery") {
+        // Spongy brakes eliminate battery issues as primary cause
+        continue;
+      }
+
+      diagnoses.push(buildDiagnosisFromFailure(rule.failureId, confidencePercent));
     }
   }
 
-  return result;
+  // Sort by highest confidence
+  return diagnoses.sort((a, b) => b.confidence - a.confidence);
 }
 
-/**
- * One-shot: loads rules, evaluates against facts, returns results.
- *
- * @param symptoms - Array of symptom IDs the user has reported
- * @param measurements - Optional key-value measurements (e.g., battery_voltage: 12.1)
- * @returns EvaluationResult
- */
-export async function evaluateSymptoms(
-  symptoms: string[],
-  measurements?: Record<string, number>,
-): Promise<EvaluationResult> {
-  const rules = await loadRules();
+export interface EvaluateSymptomsResult {
+  firedRules: string[];
+  confidenceUpdates: Map<string, number>;
+}
 
-  // Build facts from symptoms and measurements
-  const facts: Record<string, unknown> = {
-    symptom_count: symptoms.length,
-    electrical_symptom_count: 0,
-    has_critical_symptom: false,
-    ...(measurements || {}),
+export async function evaluateSymptoms(symptoms: string[]): Promise<EvaluateSymptomsResult> {
+  const firedRules: string[] = [];
+  const confidenceUpdates = new Map<string, number>();
+
+  const diagnoses = runSymptomDiagnosis(symptoms);
+  for (const diag of diagnoses) {
+    firedRules.push(diag.issue);
+    const delta = diag.confidence / 100;
+    
+    const failure = (failuresData as FailureMode[]).find(f => f.id === diag.id);
+    if (failure) {
+      confidenceUpdates.set(failure.partId, delta);
+    }
+  }
+
+  return {
+    firedRules,
+    confidenceUpdates
   };
-
-  // Set present symptoms
-  const symptomsSet = new Set<string>();
-  for (const symptomId of symptoms) {
-    symptomsSet.add(symptomId);
-    facts[`symptom_present`] = symptomId; // Keep for fallback compatibility
-  }
-  facts["symptoms_set"] = symptomsSet;
-
-  // Check for critical symptoms (from knowledge/symptoms.json)
-  const criticalSymptoms = new Set(["engine_no_crank", "no_electrical_power"]);
-  for (const s of symptoms) {
-    if (criticalSymptoms.has(s)) {
-      facts.has_critical_symptom = true;
-      break;
-    }
-  }
-
-  return fireRules(rules, facts);
-}
-
-/**
- * Returns default rules as inline fallback when knowledge/rules.json cannot be loaded.
- */
-function getDefaultRules(): Rule[] {
-  return [
-    {
-      id: "fallback_no_crank",
-      name: "Fallback: No Crank",
-      priority: 99,
-      triggerSymptom: "engine_no_crank",
-      conditions: [{ fact: "symptom_present", operator: "eq", value: "engine_no_crank" }],
-      actions: [
-        { type: "suggest_inspection", target: "battery_inspection", reason: "Check battery first" },
-        { type: "suggest_inspection", target: "fuse_inspection", reason: "Check main fuse" },
-        { type: "update_confidence", part: "battery", delta: 0.3 },
-      ],
-      description: "Fallback rule for no-crank scenario",
-    },
-  ];
 }

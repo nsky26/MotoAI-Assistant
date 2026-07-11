@@ -258,3 +258,115 @@ export function getEliminatedParts(state: EvidenceState): PartStatus[] {
 export function resetEvidence(parts: Part[]): EvidenceState {
   return createEvidenceState(parts);
 }
+
+/**
+ * Records a YOLO-detected part and its condition as an observation,
+ * updating the confidence scores of related parts dynamically.
+ *
+ * @param state - Current evidence state
+ * @param part - The detected part name (e.g. 'battery')
+ * @param condition - The classified condition (e.g. 'Corrosion', 'Healthy')
+ * @param confidence - Detection confidence
+ * @returns Updated evidence state
+ */
+export function recordYoloObservation(
+  state: EvidenceState,
+  part: string,
+  condition: string,
+  confidence: number
+): EvidenceState {
+  const partIdMap: Record<string, string> = {
+    battery: "battery",
+    spark_plug: "spark_plug",
+    chain: "drive_chain",
+    brake_disc: "brake_pads",
+    brake_caliper: "brake_pads",
+  };
+
+  const partId = partIdMap[part] || part;
+  const status = state.partStatuses.get(partId);
+  if (!status) return state;
+
+  const observation: Observation = {
+    symptomId: `yolo_${part}_${condition.toLowerCase().replace(" ", "_")}`,
+    confirmed: true,
+    timestamp: new Date().toISOString(),
+    source: "inspection"
+  };
+  state.observations.push(observation);
+
+  if (condition === "Healthy") {
+    status.confidence = Math.max(0, status.confidence - 0.4);
+  } else {
+    const delta = condition === "Corrosion" || condition === "Rust" || condition === "Worn" ? 0.5 : 0.3;
+    status.confidence = Math.min(1, status.confidence + delta);
+    
+    const existingScore = state.confidenceScores.find((s) => s.partId === partId);
+    const reason = `YOLO detected ${part} condition: ${condition}`;
+    if (existingScore) {
+      existingScore.score = status.confidence;
+      existingScore.reasons.push(reason);
+    } else {
+      state.confidenceScores.push({
+        partId,
+        score: status.confidence,
+        reasons: [reason]
+      });
+    }
+  }
+
+  return { ...state };
+}
+
+export function evaluateContextEvidence(
+  state: EvidenceState,
+  model: string,
+  mileage: number,
+  audioLabel?: string,
+  voiceText?: string
+): EvidenceState {
+  // 1. Mileage factors
+  if (mileage > 20000) {
+    state = updateConfidence(state, "drive_chain", 0.2, "High mileage (>20k km) increases transmission wear probability");
+    state = updateConfidence(state, "brake_pads", 0.15, "High mileage (>20k km) increases brake pad wear probability");
+  }
+  if (mileage > 10000) {
+    state = updateConfidence(state, "spark_plug", 0.1, "Moderate mileage (>10k km) increases spark plug fouling probability");
+  }
+
+  // 2. Brand specific weight shifts
+  const brand = model.split(" ")[0]?.toLowerCase() || "";
+  if (brand === "royal" || brand === "bullet" || brand === "enfield") {
+    state = updateConfidence(state, "drive_chain", 0.15, "Royal Enfield models exhibit higher mechanical chain play frequency");
+  }
+  if (brand === "ktm") {
+    state = updateConfidence(state, "battery", 0.1, "KTM high-compression engines demand optimal starter terminal voltage");
+  }
+
+  // 3. Audio classifier overrides
+  if (audioLabel) {
+    const audio = audioLabel.toLowerCase();
+    if (audio.includes("clicking") || audio.includes("tick")) {
+      state = updateConfidence(state, "battery", 0.4, "Acoustic signature matches battery solenoid clicking");
+    }
+    if (audio.includes("squeal") || audio.includes("grinding")) {
+      state = updateConfidence(state, "brake_pads", 0.3, "Acoustic signature matches metal-on-metal brake contact");
+    }
+    if (audio.includes("rattle") || audio.includes("slapping")) {
+      state = updateConfidence(state, "drive_chain", 0.35, "Acoustic signature matches chain slapping swingarm guide");
+    }
+  }
+
+  // 4. Voice transcript keywords
+  if (voiceText) {
+    const lower = voiceText.toLowerCase();
+    if (lower.includes("click") || lower.includes("dead") || lower.includes("start")) {
+      state = updateConfidence(state, "battery", 0.25, "Voice query referenced cranking/terminal starting symptoms");
+    }
+    if (lower.includes("squeak") || lower.includes("brake") || lower.includes("stop")) {
+      state = updateConfidence(state, "brake_fluid", 0.2, "Voice query referenced braking system friction loss");
+    }
+  }
+
+  return state;
+}

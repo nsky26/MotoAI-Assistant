@@ -139,44 +139,11 @@ export function useSpeechToText(): UseSpeechToTextReturn {
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       if (!mountedRef.current) return;
 
-      let finalTranscript = "";
-
-      // Build the complete transcript from all result items
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          finalTranscript += result[0].transcript;
-        }
+      let currentTranscript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        currentTranscript += event.results[i][0].transcript;
       }
-
-      // If we have final text, use it; otherwise fall back to the latest interim
-      if (finalTranscript) {
-        // Append to existing transcript (continuous mode accumulates)
-        setTranscript((prev) => {
-          const separator = prev && !prev.endsWith(" ") ? " " : "";
-          // Only append if the new text isn't already the end of the transcript
-          // (prevents duplicates when interim becomes final)
-          if (prev.trim().endsWith(finalTranscript.trim())) {
-            return prev;
-          }
-          return prev + separator + finalTranscript;
-        });
-      } else if (event.results.length > 0) {
-        // Show latest interim result
-        const latest = event.results[event.results.length - 1];
-        if (!latest.isFinal) {
-          // Update transcript with interim text
-          const interim = latest[0].transcript;
-          setTranscript((prev) => {
-            // If interim is already at the end, just return
-            if (prev.endsWith(interim)) return prev;
-            // Remove any previous interim and append the new one
-            const lastSpaceIndex = prev.lastIndexOf(" ");
-            const base = lastSpaceIndex >= 0 ? prev.substring(0, lastSpaceIndex) : "";
-            return base ? base + " " + interim : interim;
-          });
-        }
-      }
+      setTranscript(currentTranscript);
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {

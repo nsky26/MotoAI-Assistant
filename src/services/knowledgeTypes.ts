@@ -69,6 +69,7 @@ export interface Rule {
   conditions: RuleCondition[];
   actions: RuleAction[];
   description: string;
+  logicalOperator?: "and" | "or";
 }
 
 export interface EvaluationResult {

@@ -1,0 +1,5 @@
+[
+  { "modelId": "shine", "fluid": "Engine Oil", "specification": "10W-30 JASO MA2", "capacity": "0.9 Litres" },
+  { "modelId": "classic350", "fluid": "Engine Oil", "specification": "15W-50 JASO MA2", "capacity": "2.1 Litres" },
+  { "modelId": "generic", "fluid": "Brake Fluid", "specification": "DOT 3 or DOT 4 Glycol Ether", "capacity": "reservoir level check" }
+]

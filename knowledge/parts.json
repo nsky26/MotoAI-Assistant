@@ -1,184 +1,58 @@
-{
-  "parts": [
-    {
-      "id": "battery",
-      "name": "Battery",
-      "category": "electrical",
-      "subsystem": "starting_system",
-      "accessPath": ["seat", "battery_cover"],
-      "tools": ["8mm_wrench", "10mm_wrench", "socket_set"],
-      "symptoms": ["engine_cranks_slowly", "engine_no_crank", "dim_headlights", "clicking_sound"],
-      "relatedParts": ["starter_motor", "voltage_regulator", "main_fuse", "starter_relay"],
-      "criticality": "medium",
-      "inspectionProtocol": "battery_inspection",
-      "repairProtocol": "battery_replacement",
-      "commonIssues": ["terminal_corrosion", "low_charge", "dead_cell", "loose_connection"],
-      "estimatedCost": { "min": 2000, "max": 6000, "currency": "INR" }
-    },
-    {
-      "id": "starter_motor",
-      "name": "Starter Motor",
-      "category": "electrical",
-      "subsystem": "starting_system",
-      "accessPath": ["right_side_cover", "starter_motor_bolts"],
-      "tools": ["12mm_wrench", "socket_set", "screwdriver"],
-      "symptoms": ["clicking_sound", "engine_no_crank", "grinding_noise_start"],
-      "relatedParts": ["battery", "starter_relay", "starter_clutch", "wiring_harness"],
-      "criticality": "high",
-      "inspectionProtocol": "starter_motor_inspection",
-      "repairProtocol": "starter_motor_replacement",
-      "commonIssues": ["worn_brushes", "seized_bearing", "open_winding", "bad_solenoid"],
-      "estimatedCost": { "min": 1500, "max": 4000, "currency": "INR" }
-    },
-    {
-      "id": "spark_plug",
-      "name": "Spark Plug",
-      "category": "ignition",
-      "subsystem": "ignition_system",
-      "accessPath": ["fuel_tank", "spark_plug_cap"],
-      "tools": ["spark_plug_socket", "feeler_gauge", "torque_wrench"],
-      "symptoms": ["engine_cranks_no_start", "misfire", "poor_acceleration", "rough_idle"],
-      "relatedParts": ["ignition_coil", "spark_plug_cap", "ecu", "crank_position_sensor"],
-      "criticality": "medium",
-      "inspectionProtocol": "spark_plug_inspection",
-      "repairProtocol": "spark_plug_replacement",
-      "commonIssues": ["carbon_fouling", "oil_fouling", "electrode_wear", "cracked_porcelain", "wrong_gap"],
-      "estimatedCost": { "min": 200, "max": 500, "currency": "INR" }
-    },
-    {
-      "id": "ignition_coil",
-      "name": "Ignition Coil",
-      "category": "ignition",
-      "subsystem": "ignition_system",
-      "accessPath": ["fuel_tank", "coil_mounting_bolts"],
-      "tools": ["10mm_wrench", "multimeter", "screwdriver"],
-      "symptoms": ["engine_cranks_no_start", "weak_spark", "misfire"],
-      "relatedParts": ["spark_plug", "spark_plug_cap", "ecu", "crank_position_sensor"],
-      "criticality": "high",
-      "inspectionProtocol": "ignition_coil_inspection",
-      "repairProtocol": "ignition_coil_replacement",
-      "commonIssues": ["primary_winding_open", "secondary_winding_short", "cracked_casing", "bad_connection"],
-      "estimatedCost": { "min": 800, "max": 2000, "currency": "INR" }
-    },
-    {
-      "id": "fuel_pump",
-      "name": "Fuel Pump",
-      "category": "fuel",
-      "subsystem": "fuel_system",
-      "accessPath": ["fuel_tank", "fuel_pump_assembly"],
-      "tools": ["screwdriver", "wrench_set", "fuel_line_clamp"],
-      "symptoms": ["engine_cranks_no_start", "engine_starts_then_dies", "no_fuel_pump_prime"],
-      "relatedParts": ["fuel_filter", "fuel_injector", "ecu", "fuel_pump_relay", "fuel_pump_fuse"],
-      "criticality": "high",
-      "inspectionProtocol": "fuel_pump_inspection",
-      "repairProtocol": "fuel_pump_replacement",
-      "commonIssues": ["failed_motor", "clogged_strainer", "bad_connector", "failed_relay"],
-      "estimatedCost": { "min": 2500, "max": 6000, "currency": "INR" }
-    },
-    {
-      "id": "crank_position_sensor",
-      "name": "Crank Position Sensor",
-      "category": "sensor",
-      "subsystem": "engine_management",
-      "accessPath": ["left_side_cover", "sensor_mounting"],
-      "tools": ["10mm_wrench", "multimeter", "screwdriver"],
-      "symptoms": ["engine_cranks_no_start", "erratic_ignition", "no_rpm_gauge"],
-      "relatedParts": ["ecu", "ignition_coil", "wiring_harness", "pulse_generator"],
-      "criticality": "high",
-      "inspectionProtocol": "crank_sensor_inspection",
-      "repairProtocol": "crank_sensor_replacement",
-      "commonIssues": ["sensor_failure", "wiring_break", "air_gap_wrong", "magnetic_debris"],
-      "estimatedCost": { "min": 600, "max": 1500, "currency": "INR" }
-    },
-    {
-      "id": "main_fuse",
-      "name": "Main Fuse",
-      "category": "electrical",
-      "subsystem": "electrical_system",
-      "accessPath": ["battery_compartment", "fuse_box"],
-      "tools": ["pliers"],
-      "symptoms": ["engine_no_crank", "no_electrical_power", "all_lights_dead"],
-      "relatedParts": ["battery", "starter_relay", "ignition_switch", "wiring_harness"],
-      "criticality": "critical",
-      "inspectionProtocol": "fuse_inspection",
-      "repairProtocol": "fuse_replacement",
-      "commonIssues": ["blown_fuse", "corrosion", "loose_connection"],
-      "estimatedCost": { "min": 20, "max": 100, "currency": "INR" }
-    },
-    {
-      "id": "starter_relay",
-      "name": "Starter Relay",
-      "category": "electrical",
-      "subsystem": "starting_system",
-      "accessPath": ["battery_compartment", "relay_box"],
-      "tools": ["screwdriver", "multimeter"],
-      "symptoms": ["clicking_sound", "engine_no_crank"],
-      "relatedParts": ["battery", "starter_motor", "ignition_switch", "main_fuse"],
-      "criticality": "high",
-      "inspectionProtocol": "starter_relay_inspection",
-      "repairProtocol": "starter_relay_replacement",
-      "commonIssues": ["welded_contacts", "coil_open", "corrosion"],
-      "estimatedCost": { "min": 300, "max": 800, "currency": "INR" }
-    },
-    {
-      "id": "fuel_filter",
-      "name": "Fuel Filter",
-      "category": "fuel",
-      "subsystem": "fuel_system",
-      "accessPath": ["left_side_cover", "fuel_line"],
-      "tools": ["screwdriver", "fuel_line_clamp", "container"],
-      "symptoms": ["engine_starts_then_dies", "poor_acceleration", "hesitation"],
-      "relatedParts": ["fuel_pump", "fuel_injector", "fuel_tank"],
-      "criticality": "medium",
-      "inspectionProtocol": "fuel_filter_inspection",
-      "repairProtocol": "fuel_filter_replacement",
-      "commonIssues": ["clogged_filter", "water_contamination", "rust_particles"],
-      "estimatedCost": { "min": 150, "max": 400, "currency": "INR" }
-    },
-    {
-      "id": "wiring_harness",
-      "name": "Wiring Harness",
-      "category": "electrical",
-      "subsystem": "electrical_system",
-      "accessPath": ["frame_spine", "under_tank"],
-      "tools": ["multimeter", "electrical_tape", "crimping_tool", "zip_ties"],
-      "symptoms": ["intermittent_failure", "multiple_electrical_issues", "engine_cranks_no_start"],
-      "relatedParts": ["battery", "ecu", "ignition_switch", "all_sensors"],
-      "criticality": "critical",
-      "inspectionProtocol": "wiring_harness_inspection",
-      "repairProtocol": "wiring_harness_repair",
-      "commonIssues": ["chafed_wire", "corroded_connector", "broken_ground", "rodent_damage"],
-      "estimatedCost": { "min": 500, "max": 5000, "currency": "INR" }
-    },
-    {
-      "id": "ecu",
-      "name": "ECU (Engine Control Unit)",
-      "category": "electronics",
-      "subsystem": "engine_management",
-      "accessPath": ["seat", "ecu_compartment"],
-      "tools": ["screwdriver", "multimeter"],
-      "symptoms": ["engine_cranks_no_start", "check_engine_light", "erratic_behavior"],
-      "relatedParts": ["battery", "crank_position_sensor", "ignition_coil", "fuel_injector", "wiring_harness"],
-      "criticality": "critical",
-      "inspectionProtocol": "ecu_inspection",
-      "repairProtocol": "ecu_replacement",
-      "commonIssues": ["water_damage", "failed_capacitor", "corroded_pins", "software_corruption"],
-      "estimatedCost": { "min": 5000, "max": 15000, "currency": "INR" }
-    },
-    {
-      "id": "voltage_regulator",
-      "name": "Voltage Regulator / Rectifier",
-      "category": "electrical",
-      "subsystem": "charging_system",
-      "accessPath": ["right_side_cover", "regulator_mounting"],
-      "tools": ["10mm_wrench", "multimeter", "screwdriver"],
-      "symptoms": ["battery_not_charging", "dim_headlights", "overcharged_battery"],
-      "relatedParts": ["battery", "alternator_stator", "wiring_harness"],
-      "criticality": "high",
-      "inspectionProtocol": "voltage_regulator_inspection",
-      "repairProtocol": "voltage_regulator_replacement",
-      "commonIssues": ["failed_regulator", "blown_diode", "overheating", "bad_ground"],
-      "estimatedCost": { "min": 800, "max": 2000, "currency": "INR" }
-    }
-  ]
-}
+[
+  {
+    "id": "battery",
+    "name": "Starter Battery",
+    "purpose": "Provides electrical energy to start the engine and power the electrical accessories.",
+    "system": "Electrical",
+    "failures": ["dead_battery", "low_voltage", "loose_terminals", "corroded_terminals"]
+  },
+  {
+    "id": "spark_plug",
+    "name": "Spark Plug",
+    "purpose": "Ignites the air-fuel mixture in the combustion chamber via electric spark.",
+    "system": "Ignition",
+    "failures": ["carbon_fouled_plug", "oil_fouled_plug", "wet_plug_fuel", "incorrect_plug_gap"]
+  },
+  {
+    "id": "drive_chain",
+    "name": "Drive Chain",
+    "purpose": "Transfers rotational power from the gearbox output shaft to the rear wheel.",
+    "system": "Transmission",
+    "failures": ["loose_chain_slack", "rusted_chain_links", "dry_chain_no_lube"]
+  },
+  {
+    "id": "brake_pads",
+    "name": "Brake Pads",
+    "purpose": "Clamps onto the brake disc to create friction and decelerate the motorcycle.",
+    "system": "Braking",
+    "failures": ["worn_pads", "contaminated_pads"]
+  },
+  {
+    "id": "brake_fluid",
+    "name": "Brake Fluid",
+    "purpose": "Transmits hydraulic force from master cylinder levers to calipers.",
+    "system": "Braking",
+    "failures": ["air_in_brake_lines", "low_brake_fluid"]
+  },
+  {
+    "id": "tyres",
+    "name": "Tyres",
+    "purpose": "Provides traction, absorbs road shock, and aids handling.",
+    "system": "Wheel & Tyres",
+    "failures": ["tire_puncture", "low_tire_pressure"]
+  },
+  {
+    "id": "carburetor",
+    "name": "Carburetor",
+    "purpose": "Mixes air and fuel in correct stoichiometric ratios for combustion.",
+    "system": "Fuel System",
+    "failures": ["dirty_carburetor_jets", "clogged_jets"]
+  },
+  {
+    "id": "starter_motor",
+    "name": "Starter Motor",
+    "purpose": "Cranks the crankshaft to initiate the internal combustion engine loop.",
+    "system": "Starting System",
+    "failures": ["starter_clicking", "starter_motor_burnt"]
+  }
+]
