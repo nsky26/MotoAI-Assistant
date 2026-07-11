@@ -1,0 +1,50 @@
+[
+  {
+    "id": "dead_battery",
+    "name": "Dead / Discharged Starter Battery",
+    "partId": "battery",
+    "severity": "HIGH",
+    "prior": 0.40,
+    "description": "Battery voltage has dropped below operating threshold (e.g. < 11.5V) causing cranking failure."
+  },
+  {
+    "id": "corroded_terminals",
+    "name": "Corroded Battery Terminals",
+    "partId": "battery",
+    "severity": "MEDIUM",
+    "prior": 0.25,
+    "description": "White/green lead sulfate deposits on terminal posts insulating electrical current."
+  },
+  {
+    "id": "carbon_fouled_plug",
+    "name": "Carbon Fouled Spark Plug",
+    "partId": "spark_plug",
+    "severity": "MEDIUM",
+    "prior": 0.30,
+    "description": "Dark dry carbon soot deposits bridging spark gap, causing combustion misfires."
+  },
+  {
+    "id": "loose_chain_slack",
+    "name": "Loose Drive Chain",
+    "partId": "drive_chain",
+    "severity": "MEDIUM",
+    "prior": 0.35,
+    "description": "Chain slack exceeds standard tolerance (25-30mm), causing rattling or sprocket wear."
+  },
+  {
+    "id": "air_in_brake_lines",
+    "name": "Air in Hydraulic Brake Lines",
+    "partId": "brake_fluid",
+    "severity": "HIGH",
+    "prior": 0.15,
+    "description": "Air bubbles trapped inside hydraulic calipers compressing easily and causing spongy braking."
+  },
+  {
+    "id": "tire_puncture",
+    "name": "Rear Tyre Puncture",
+    "partId": "tyres",
+    "severity": "HIGH",
+    "prior": 0.20,
+    "description": "Loss of air pressure caused by sharp objects penetrating tire thread casing."
+  }
+]

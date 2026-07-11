@@ -1,0 +1,156 @@
+[
+  {
+    "failureId": "dead_battery",
+    "inspection": [
+      "Check starter battery terminal voltage using a multimeter.",
+      "Inspect terminal connectors for security and integrity."
+    ],
+    "repair": [
+      "Loosen the negative (-) terminal connector clamp and slide it off.",
+      "Loosen the positive (+) terminal connector clamp and slide it off.",
+      "Remove battery strap or brackets, extract battery from casing.",
+      "Slide in the new fully-charged lead-acid AGM battery.",
+      "Connect and torque the positive (+) terminal first, then the negative (-) terminal."
+    ],
+    "verification": {
+      "type": "camera",
+      "target": "battery",
+      "checklist": [
+        "Voltage reads 12.6V or higher.",
+        "Terminal leads are clamped tightly with zero play."
+      ]
+    },
+    "rollback": [
+      "Disconnect terminals starting with negative first.",
+      "Re-seat previous battery or check master fuse for blown state."
+    ]
+  },
+  {
+    "failureId": "corroded_terminals",
+    "inspection": [
+      "Inspect battery terminal leads for green/white sulfate powder crust.",
+      "Verify if connection wiggle cuts electrical display console power."
+    ],
+    "repair": [
+      "Disconnect negative terminal connector clamp, then positive connector clamp.",
+      "Scrub terminals and connectors using wire brush and baking soda water mixture.",
+      "Dry leads thoroughly and apply thin film of dielectric grease.",
+      "Reconnect positive terminal lead first, then negative terminal lead securely."
+    ],
+    "verification": {
+      "type": "camera",
+      "target": "battery",
+      "checklist": [
+        "Terminal posts are clean with zero powdery oxidation.",
+        "Grease film coverage is complete."
+      ]
+    },
+    "rollback": [
+      "Wipe grease residue off posts.",
+      "Check connection bolt threads for damage."
+    ]
+  },
+  {
+    "failureId": "carbon_fouled_plug",
+    "inspection": [
+      "Unplug spark plug boot connector.",
+      "Unscrew spark plug using 16mm socket wrench and inspect tip color."
+    ],
+    "repair": [
+      "Scrub electrode tip using fine wire brush or replacement plug.",
+      "Verify plug gap thickness matches spec (e.g. 0.7mm) using feeler gauge.",
+      "Screw in plug by hand clockwise to prevent thread cross damage.",
+      "Tighten to specification using plug torque wrench, reconnect boot."
+    ],
+    "verification": {
+      "type": "camera",
+      "target": "spark_plug",
+      "checklist": [
+        "Plug electrode is clean with dry metallic finish.",
+        "Gap thickness meets manufacturer specifications."
+      ]
+    },
+    "rollback": [
+      "Remove plug and re-check gap spacing.",
+      "Ensure plug boot is pushed down until clicks."
+    ]
+  },
+  {
+    "failureId": "loose_chain_slack",
+    "inspection": [
+      "Place bike on center stand.",
+      "Measure mid-run vertical chain movement slack using ruler."
+    ],
+    "repair": [
+      "Loosen main rear axle wheel spindle nut.",
+      "Rotate chain adjuster bolts on both sides equally to tighten slack.",
+      "Ensure swingarm alignment index lines match exactly on both sides.",
+      "Torque rear axle nut to 80 Nm specification.",
+      "Spray high-speed dry lube along chain run."
+    ],
+    "verification": {
+      "type": "camera",
+      "target": "chain",
+      "checklist": [
+        "Chain slack measures 25-30mm mid-run.",
+        "Wheel alignment index lines match perfectly."
+      ]
+    },
+    "rollback": [
+      "Loosen axle nut.",
+      "Back out adjuster bolts to return to previous state."
+    ]
+  },
+  {
+    "failureId": "air_in_brake_lines",
+    "inspection": [
+      "Pull brake lever and verify spongy feel with near handlebar contact.",
+      "Inspect lines and seals for hydraulic fluid leaks."
+    ],
+    "repair": [
+      "Remove master cylinder reservoir cap.",
+      "Attach clear tube to caliper bleed valve and submerge end in brake fluid container.",
+      "Pump lever 3-4 times, hold it down, and crack open bleed valve.",
+      "Close bleed valve before releasing the lever.",
+      "Repeat until no bubbles exit tube, topping up reservoir as needed."
+    ],
+    "verification": {
+      "type": "camera",
+      "target": "brake",
+      "checklist": [
+        "Brake lever feels firm and rigid.",
+        "Zero bubbles exiting bleed tube."
+      ]
+    },
+    "rollback": [
+      "Top up reservoir and bleed again.",
+      "Ensure reservoir cap seal is not crimped."
+    ]
+  },
+  {
+    "failureId": "tire_puncture",
+    "inspection": [
+      "Rotate wheel slowly and check tread surface for nail or puncture entry.",
+      "Inspect side walls for cracks or deformation."
+    ],
+    "repair": [
+      "Remove nail/debris using pliers.",
+      "Clean puncture channel using reamer file tool.",
+      "Prep rubber plug with vulcanizing glue cement, insert using needle tool.",
+      "Cut plug excess tail flush with tread surface.",
+      "Re-inflate tire to recommended 32 PSI pressure."
+    ],
+    "verification": {
+      "type": "camera",
+      "target": "tyres",
+      "checklist": [
+        "Soapy water spray shows zero air bubbles at plug site.",
+        "Tire pressure remains stable at 32 PSI."
+      ]
+    },
+    "rollback": [
+      "Inspect plug seal stability.",
+      "Re-inflate or prepare for internal tube repair."
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 10
+names: ['engine-chasis', 'exhaust', 'frontside', 'handlebar', 'motorbike', 'rearside', 'seat', 'tank', 'watermark', 'wheel']
+
+roboflow:
+  workspace: ua-ao9vf
+  project: motorbike-parts
+  version: 2
+  license: MIT
+  url: https://universe.roboflow.com/ua-ao9vf/motorbike-parts/dataset/2

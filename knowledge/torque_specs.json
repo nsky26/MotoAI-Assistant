@@ -1,0 +1,7 @@
+[
+  { "component": "spark_plug", "fastener": "Thread M10", "torque": "10-12 Nm", "notes": "Hand-thread first to avoid cross-threading." },
+  { "component": "spark_plug", "fastener": "Thread M12", "torque": "15-20 Nm", "notes": "Torque when engine is cold." },
+  { "component": "battery", "fastener": "Terminal bolts", "torque": "2-3 Nm", "notes": "Do not over-tighten lead posts." },
+  { "component": "drive_chain", "fastener": "Rear axle spindle nut", "torque": "80-95 Nm", "notes": "Apply locking cotter pin where equipped." },
+  { "component": "brake_fluid", "fastener": "Caliper bleed valve", "torque": "6-8 Nm", "notes": "Wipe fluid spill immediately." }
+]

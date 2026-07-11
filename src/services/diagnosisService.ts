@@ -6,7 +6,7 @@
  */
 import type { Diagnosis, Mechanic } from "../types";
 
-/** Battery corrosion preset (non-critical, DIY-safe) */
+/** Battery corrosion preset */
 const BATTERY_PRESET: Diagnosis = {
   id: "battery-corrosion",
   isCritical: false,
@@ -30,7 +30,7 @@ const BATTERY_PRESET: Diagnosis = {
   ],
 };
 
-/** Brake failure preset (critical, not DIY-safe) */
+/** Brake failure preset */
 const BRAKE_PRESET: Diagnosis = {
   id: "brake-failure",
   isCritical: true,
@@ -60,27 +60,91 @@ const BRAKE_PRESET: Diagnosis = {
   ],
 };
 
-/**
- * Returns a fallback diagnosis for a given issue type.
- * Used when the API is unreachable or Gemini is unavailable.
- *
- * @param type - "battery" | "brake"
- * @returns A Diagnosis object
- */
-export function getFallbackDiagnosis(type: "battery" | "brake"): Diagnosis {
+/** Spark plug preset */
+const SPARK_PRESET: Diagnosis = {
+  id: "spark-plug-fouled",
+  isCritical: false,
+  issue: "Fouled or Carbonized Spark Plug",
+  confidence: 94,
+  description: "Misfiring and ignition issues detected in cylinder head.",
+  difficulty: 2,
+  estimatedTime: "20 mins",
+  diyCost: 12,
+  proEstimate: 60,
+  severityCode: "B002",
+  severityLevel: "MEDIUM",
+  aiRecommendation: "Replace fouled spark plug with identical heat range. Check gap thickness before installing.",
+  steps: [
+    "Locate the spark plug boot on the cylinder head.",
+    "Carefully pull off the boot connector.",
+    "Unscrew the plug counterclockwise using a spark plug socket.",
+    "Thread in the new plug by hand to prevent cross-threading, then tighten to torque specifications.",
+    "Reattach the boot connector securely.",
+  ],
+};
+
+/** Drive chain preset */
+const CHAIN_PRESET: Diagnosis = {
+  id: "chain-loose",
+  isCritical: false,
+  issue: "Loose or Rusted Drive Chain",
+  confidence: 92,
+  description: "Slack exceeds recommended tension tolerance margins.",
+  difficulty: 2,
+  estimatedTime: "30 mins",
+  diyCost: 15,
+  proEstimate: 70,
+  severityCode: "B003",
+  severityLevel: "MEDIUM",
+  aiRecommendation: "Adjust chain tension adjuster bolts equally on both sides. Apply high-quality dry chain lube.",
+  steps: [
+    "Loosen the main rear axle nut.",
+    "Adjust tensioner bolts equally on left and right sides to restore 25-30mm slack.",
+    "Verify wheel alignment markings are aligned.",
+    "Torque rear axle nut to manufacturer specification.",
+    "Lubricate chain links thoroughly.",
+  ],
+};
+
+/** Tire puncture preset */
+const TIRE_PRESET: Diagnosis = {
+  id: "tire-puncture",
+  isCritical: false,
+  issue: "Rear Tire Puncture / Pressure Loss",
+  confidence: 96,
+  description: "Identified flat/puncture via visual thread check or pressure telemetry drop.",
+  difficulty: 2,
+  estimatedTime: "25 mins",
+  diyCost: 10,
+  proEstimate: 50,
+  severityCode: "B004",
+  severityLevel: "HIGH",
+  aiRecommendation: "Ensure tire plug is sealed properly. Inflate to 32 PSI and run bubble check with soapy water.",
+  steps: [
+    "Park motorcycle on center stand on level ground.",
+    "Inspect tread surface to locate nail, glass, or puncture site.",
+    "Extract debris using pliers and prep hole using a tire reamer.",
+    "Insert plug cord coated in vulcanizing cement using the plug installation tool.",
+    "Cut tail excess flush with tread and inflate tire back to recommended PSI.",
+  ],
+};
+
+export function getFallbackDiagnosis(type: "battery" | "brake" | "spark_plug" | "chain" | "tire_puncture"): Diagnosis {
   switch (type) {
     case "brake":
       return { ...BRAKE_PRESET, mechanics: [...(BRAKE_PRESET.mechanics || [])] };
+    case "spark_plug":
+      return { ...SPARK_PRESET };
+    case "chain":
+      return { ...CHAIN_PRESET };
+    case "tire_puncture":
+      return { ...TIRE_PRESET };
     case "battery":
     default:
       return { ...BATTERY_PRESET };
   }
 }
 
-/**
- * Returns the default fallback mechanics list.
- * Used by CriticalAlertView and server when AI returns no mechanics.
- */
 export function getFallbackMechanics(): Mechanic[] {
   return [
     {
@@ -108,21 +172,38 @@ export function getFallbackMechanics(): Mechanic[] {
   ];
 }
 
-/**
- * Determines which fallback preset to use based on user input text.
- * Used by the API endpoint for keyword-based routing.
- *
- * @param input - The user's issue description
- * @returns "brake" | "battery"
- */
-export function resolveFallbackPreset(input: string): "brake" | "battery" {
+export function resolveFallbackPreset(input: string): "brake" | "battery" | "spark_plug" | "chain" | "tire_puncture" {
   const lower = input.toLowerCase();
   if (
     lower.includes("brake") ||
     lower.includes("rotor") ||
-    lower.includes("leak")
+    lower.includes("leak") ||
+    lower.includes("caliper")
   ) {
     return "brake";
+  }
+  if (
+    lower.includes("tire") ||
+    lower.includes("puncture") ||
+    lower.includes("flat")
+  ) {
+    return "tire_puncture";
+  }
+  if (
+    lower.includes("spark") ||
+    lower.includes("starting") ||
+    lower.includes("engine") ||
+    lower.includes("plug")
+  ) {
+    return "spark_plug";
+  }
+  if (
+    lower.includes("chain") ||
+    lower.includes("noise") ||
+    lower.includes("grinding") ||
+    lower.includes("loose")
+  ) {
+    return "chain";
   }
   return "battery";
 }

@@ -1,0 +1,8 @@
+[
+  { "id": "t_multimeter", "name": "Digital Multimeter", "purpose": "Testing electrical voltage, resistance, and continuity" },
+  { "id": "t_socket_wrench", "name": "Metric Socket & Wrench Set", "purpose": "Loosening and tightening mechanical bolts (8mm - 19mm)" },
+  { "id": "t_spark_socket", "name": "16mm Spark Plug Socket Wrench", "purpose": "Removing and installing spark plugs safely" },
+  { "id": "t_wire_brush", "name": "Wire Brush", "purpose": "Scrubbing terminals and threads clean of corrosion" },
+  { "id": "t_tire_reamer", "name": "Tire Plug Reamer & Needle Tool", "purpose": "Cleaning and inserting tubeless tire repair cords" },
+  { "id": "t_brake_bleed", "name": "Hydraulic Brake Bleeder Kit", "purpose": "Bleeding air bubbles out of brake fluid lines" }
+]

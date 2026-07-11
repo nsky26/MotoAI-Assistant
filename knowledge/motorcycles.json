@@ -1,0 +1,9 @@
+[
+  { "id": "honda_shine", "brand": "Honda", "model": "Shine", "engine": "125cc", "type": "Commuter" },
+  { "id": "hero_splendor", "brand": "Hero", "model": "Splendor Plus", "engine": "100cc", "type": "Commuter" },
+  { "id": "bajaj_pulsar", "brand": "Bajaj", "model": "Pulsar 150", "engine": "150cc", "type": "Sports Commuter" },
+  { "id": "tvs_apache", "brand": "TVS", "model": "Apache RTR 160", "engine": "160cc", "type": "Sports Commuter" },
+  { "id": "yamaha_fz", "brand": "Yamaha", "model": "FZ-S V3", "engine": "149cc", "type": "Naked Sport" },
+  { "id": "royal_enfield_classic", "brand": "Royal Enfield", "model": "Classic 350", "engine": "349cc", "type": "Retro Cruiser" },
+  { "id": "ktm_duke", "brand": "KTM", "model": "Duke 200", "engine": "199cc", "type": "Naked Sport" }
+]

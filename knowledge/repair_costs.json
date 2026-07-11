@@ -1,0 +1,8 @@
+[
+  { "failureId": "dead_battery", "partCost": 35, "proLaborCost": 50, "totalProCost": 85 },
+  { "failureId": "corroded_terminals", "partCost": 5, "proLaborCost": 40, "totalProCost": 45 },
+  { "failureId": "carbon_fouled_plug", "partCost": 12, "proLaborCost": 30, "totalProCost": 42 },
+  { "failureId": "loose_chain_slack", "partCost": 0, "proLaborCost": 30, "totalProCost": 30 },
+  { "failureId": "air_in_brake_lines", "partCost": 10, "proLaborCost": 60, "totalProCost": 70 },
+  { "failureId": "tire_puncture", "partCost": 10, "proLaborCost": 30, "totalProCost": 40 }
+]

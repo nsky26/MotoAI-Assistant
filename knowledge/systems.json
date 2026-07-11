@@ -1,0 +1,8 @@
+[
+  { "id": "electrical", "name": "Electrical System", "components": ["battery", "charging_system", "starter_motor", "starter_relay"] },
+  { "id": "ignition", "name": "Ignition System", "components": ["spark_plug", "ignition_coil", "cdi", "ecu"] },
+  { "id": "fuel", "name": "Fuel Delivery System", "components": ["fuel_pump", "fuel_injector", "carburetor", "fuel_filter", "throttle_body"] },
+  { "id": "engine", "name": "Engine Internals", "components": ["cylinder_head", "piston", "valves", "camshaft", "timing_chain"] },
+  { "id": "transmission", "name": "Transmission & Drivetrain", "components": ["clutch", "gearbox", "drive_chain", "sprockets"] },
+  { "id": "braking", "name": "Brake System", "components": ["brake_pads", "brake_disc", "brake_caliper", "brake_fluid", "abs"] }
+]

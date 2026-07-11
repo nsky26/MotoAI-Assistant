@@ -6,13 +6,74 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { getFallbackDiagnosis, getFallbackMechanics, resolveFallbackPreset } from "./src/services/diagnosisService";
 import { buildDiagnosisPrompt, mapAiToDiagnosis, classifySeverity } from "./src/services/aiDiagnosisService";
 import type { AiDiagnosisResponse } from "./src/types";
+import { runSymptomDiagnosis } from "./src/services/ruleEngine";
 
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || "3000", 10);
 
 app.use(express.json());
+
+// ────────────────────────────────────────────────────────────────────────────
+// Production Middlewares & Security
+// ────────────────────────────────────────────────────────────────────────────
+
+// Logging Middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
+// Custom CORS Headers
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// Custom Security Headers
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  next();
+});
+
+// In-Memory Rate Limiter
+const ipRequests = new Map<string, { count: number; resetTime: number }>();
+app.use((req, res, next) => {
+  const ip = req.ip || req.headers["x-forwarded-for"]?.toString() || "unknown";
+  const now = Date.now();
+  const limit = 200; // 200 requests
+  const windowMs = 60000; // per minute
+  
+  let reqData = ipRequests.get(ip);
+  if (!reqData || now > reqData.resetTime) {
+    reqData = { count: 0, resetTime: now + windowMs };
+  }
+  reqData.count++;
+  ipRequests.set(ip, reqData);
+  
+  if (reqData.count > limit) {
+    return res.status(429).json({ error: "Too many requests. Please try again later." });
+  }
+  next();
+});
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "MotoAI Backend",
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Lazy-initialized Gemini client
 let aiClient: GoogleGenAI | null = null;
@@ -39,6 +100,9 @@ function getGeminiClient(): GoogleGenAI {
 const PRESET_DIAGNOSES = {
   battery: getFallbackDiagnosis("battery"),
   brake: getFallbackDiagnosis("brake"),
+  spark_plug: getFallbackDiagnosis("spark_plug"),
+  chain: getFallbackDiagnosis("chain"),
+  tire_puncture: getFallbackDiagnosis("tire_puncture"),
 };
 
 // API Endpoint: Text-based AI diagnosis (no keyword matching)
@@ -61,7 +125,7 @@ app.post("/api/diagnose", async (req, res) => {
     const prompt = buildDiagnosisPrompt(input);
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: process.env.GEMINI_MODEL || "gemini-2.5-pro",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -98,7 +162,36 @@ app.post("/api/diagnose", async (req, res) => {
     console.warn("AI Diagnostics (aiDiagnosisService) failed, using severity-based fallback:", err.message);
   }
 
-  // Step 2: Fallback — classify severity dynamically, NO keyword matching
+  // Step 2: Fallback — run local multi-symptom rule engine
+  const words = (input || "").toLowerCase().split(/\s+/);
+  const symptoms: string[] = [];
+  if (words.some(w => w.includes("start") || w.includes("crank") || w.includes("turn"))) {
+    symptoms.push("s_weak_cranking");
+  }
+  if (words.some(w => w.includes("click") || w.includes("tick"))) {
+    symptoms.push("s_clicking_noise_battery");
+  }
+  if (words.some(w => w.includes("spongy") || w.includes("soft") || w.includes("brake"))) {
+    symptoms.push("s_soft_brake_lever");
+  }
+  if (words.some(w => w.includes("grind") || w.includes("pads"))) {
+    symptoms.push("s_grinding_noise_brakes");
+  }
+  if (words.some(w => w.includes("chain") || w.includes("clank") || w.includes("rattle"))) {
+    symptoms.push("s_chain_clanking");
+  }
+  if (words.some(w => w.includes("misfire") || w.includes("sputter") || w.includes("spark"))) {
+    symptoms.push("s_engine_misfire");
+  }
+  if (words.some(w => w.includes("tire") || w.includes("puncture") || w.includes("flat"))) {
+    symptoms.push("s_flat_tire_handling");
+  }
+
+  const matches = runSymptomDiagnosis(symptoms);
+  if (matches.length > 0) {
+    return res.json({ success: true, diagnosis: matches[0] });
+  }
+
   const severity = classifySeverity(input);
   if (severity === "CRITICAL" || severity === "HIGH") {
     return res.json({ success: true, diagnosis: PRESET_DIAGNOSES.brake });
@@ -160,7 +253,7 @@ Rules:
 - repairSteps should be clear, actionable, and safe.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: process.env.GEMINI_MODEL || "gemini-2.5-pro",
       contents: [
         {
           role: "user",
@@ -203,9 +296,37 @@ Rules:
     console.warn("Vision diagnostics failed, falling back to text-based diagnosis:", err.message);
   }
 
-  // Fallback: if vision fails (no key, network error, etc.), fall through to text-based diagnose
-  // Re-route to the text-based diagnose logic with the user prompt
+  // Fallback: if vision fails (no key, network error, etc.), run rule engine on prompt terms
   const fallbackInput = prompt || "motorcycle issue";
+  const words = fallbackInput.toLowerCase().split(/\s+/);
+  const symptoms: string[] = [];
+  if (words.some(w => w.includes("start") || w.includes("crank") || w.includes("turn") || w.includes("battery") || w.includes("voltage"))) {
+    symptoms.push("s_weak_cranking");
+  }
+  if (words.some(w => w.includes("click") || w.includes("tick"))) {
+    symptoms.push("s_clicking_noise_battery");
+  }
+  if (words.some(w => w.includes("spongy") || w.includes("soft") || w.includes("brake"))) {
+    symptoms.push("s_soft_brake_lever");
+  }
+  if (words.some(w => w.includes("grind") || w.includes("pads") || w.includes("brake"))) {
+    symptoms.push("s_grinding_noise_brakes");
+  }
+  if (words.some(w => w.includes("chain") || w.includes("clank") || w.includes("rattle") || w.includes("loose"))) {
+    symptoms.push("s_chain_clanking");
+  }
+  if (words.some(w => w.includes("misfire") || w.includes("sputter") || w.includes("spark") || w.includes("plug"))) {
+    symptoms.push("s_engine_misfire");
+  }
+  if (words.some(w => w.includes("tire") || w.includes("puncture") || w.includes("flat"))) {
+    symptoms.push("s_flat_tire_handling");
+  }
+
+  const matches = runSymptomDiagnosis(symptoms);
+  if (matches.length > 0) {
+    return res.json({ success: true, diagnosis: matches[0] });
+  }
+
   const preset = resolveFallbackPreset(fallbackInput);
   return res.json({ success: true, diagnosis: PRESET_DIAGNOSES[preset] });
 });
@@ -346,14 +467,15 @@ Provide a concise, practical, pro-mechanic advice answer. Max 100 words. Speak d
 
 // Setup Vite Dev server or production static serving
 async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV === "development") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.resolve(__dirname);
+    console.log(`Serving static assets from production dist path: ${distPath}`);
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));

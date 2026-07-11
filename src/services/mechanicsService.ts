@@ -18,6 +18,7 @@
  */
 import type { Mechanic, MechanicSearchResponse, SeverityLevel } from "../types";
 import { getFallbackMechanics } from "./diagnosisService";
+import { getApiUrl } from "./apiClient";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -150,7 +151,7 @@ export async function fetchNearbyMechanics(
 
   // Not cached or expired -> fetch from API
   try {
-    const response = await fetch("/api/nearby-mechanics", {
+    const response = await fetch(getApiUrl("/api/nearby-mechanics"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ latitude, longitude }),

@@ -1,0 +1,6 @@
+[
+  { "component": "drive_chain", "intervalMileage": 1000, "action": "Lubricate links, inspect slack displacement, verify alignment markers." },
+  { "component": "spark_plug", "intervalMileage": 6000, "action": "Inspect for carbon deposits, re-gap electrode or replace plug." },
+  { "component": "battery", "intervalMileage": 12000, "action": "Verify terminal voltage (>12.4V), check connections for corrosion." },
+  { "component": "brake_fluid", "intervalMileage": 24000, "action": "Perform complete hydraulic brake line fluid bleed and flush." }
+]

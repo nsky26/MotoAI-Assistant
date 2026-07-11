@@ -1,0 +1,11 @@
+[
+  { "id": "shine", "brandId": "honda", "name": "CB Shine 125" },
+  { "id": "activa", "brandId": "honda", "name": "Activa 6G" },
+  { "id": "splendor", "brandId": "hero", "name": "Splendor Plus" },
+  { "id": "pulsar", "brandId": "bajaj", "name": "Pulsar 150" },
+  { "id": "apache", "brandId": "tvs", "name": "Apache RTR 160" },
+  { "id": "r15", "brandId": "yamaha", "name": "YZF-R15 V4" },
+  { "id": "gixxer", "brandId": "suzuki", "name": "Gixxer 155" },
+  { "id": "classic350", "brandId": "royal_enfield", "name": "Classic 350" },
+  { "id": "duke200", "brandId": "ktm", "name": "Duke 200" }
+]

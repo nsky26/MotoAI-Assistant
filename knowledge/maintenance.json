@@ -1,0 +1,6 @@
+[
+  { "id": "m_chain_lube", "component": "drive_chain", "interval": "500 km", "task": "Lubricate links and inspect slack displacement" },
+  { "id": "m_spark_clean", "component": "spark_plug", "interval": "5000 km", "task": "Clean soot build-up and verify gap spacing spec" },
+  { "id": "m_battery_check", "component": "battery", "interval": "6 months", "task": "Test voltage level and clean lead oxidation deposits" },
+  { "id": "m_brake_flush", "component": "brake_fluid", "interval": "2 years", "task": "Flush and bleed hydraulic system with fresh DOT 4" }
+]

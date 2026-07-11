@@ -1,0 +1,4 @@
+[
+  { "circuit": "Starter Loop", "components": ["battery", "starter_relay", "starter_motor"], "colorCodes": "Red/Black, Yellow/Red", "ground": "Frame Negative" },
+  { "circuit": "Ignition Primary", "components": ["ecu", "ignition_coil", "spark_plug"], "colorCodes": "Black/White, Blue/Yellow", "ground": "Cylinder Head Ground" }
+]

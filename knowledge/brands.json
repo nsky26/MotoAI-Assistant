@@ -1,0 +1,14 @@
+[
+  { "id": "honda", "name": "Honda", "country": "Japan" },
+  { "id": "hero", "name": "Hero MotoCorp", "country": "India" },
+  { "id": "tvs", "name": "TVS Motor", "country": "India" },
+  { "id": "bajaj", "name": "Bajaj Auto", "country": "India" },
+  { "id": "yamaha", "name": "Yamaha", "country": "Japan" },
+  { "id": "suzuki", "name": "Suzuki", "country": "Japan" },
+  { "id": "royal_enfield", "name": "Royal Enfield", "country": "India / UK" },
+  { "id": "ktm", "name": "KTM", "country": "Austria" },
+  { "id": "kawasaki", "name": "Kawasaki", "country": "Japan" },
+  { "id": "benelli", "name": "Benelli", "country": "Italy / China" },
+  { "id": "bmw_motorrad", "name": "BMW Motorrad", "country": "Germany" },
+  { "id": "triumph", "name": "Triumph", "country": "UK" }
+]
