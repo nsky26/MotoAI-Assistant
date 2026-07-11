@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Mic, Zap, Shield, HelpCircle, ArrowRight, Camera, RefreshCw, ScanLine } from "lucide-react";
+import { Mic, Zap, Shield, HelpCircle, ArrowRight, Camera, RefreshCw, ScanLine, FolderOpen, MapPin } from "lucide-react";
 import { Diagnosis, VisionDiagnosisResponse } from "../types";
 import { getFallbackDiagnosis } from "../services/diagnosisService";
 import { useSpeechToText } from "../hooks/useSpeechToText";
-import { captureFrame, buildVisionPayload, validateImage } from "../services/cameraService";
+import { Capacitor } from "@capacitor/core";
+import { captureFrame, buildVisionPayload, validateImage, captureNativePhoto } from "../services/cameraService";
 import { classifySeverity } from "../services/aiDiagnosisService";
 
 interface CameraScanViewProps {
@@ -18,6 +19,30 @@ export default function CameraScanView({ onDiagnosticComplete, onSelectCriticalP
   const [hasCameraAccess, setHasCameraAccess] = useState<boolean | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [displayTranscript, setDisplayTranscript] = useState<string>("\"I'm hearing a clicking sound near the battery...\"");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isZoomed, setIsZoomed] = useState<boolean>(false);
+
+  const handleSelectFromGallery = async () => {
+    try {
+      const { Camera, CameraSource, CameraResultType } = await import("@capacitor/camera");
+      const image = await Camera.getPhoto({
+        quality: 80,
+        allowEditing: false,
+        source: CameraSource.Photos,
+        resultType: CameraResultType.Base64,
+      });
+      if (image.base64String) {
+        setSelectedImage(image.base64String);
+      }
+    } catch (err) {
+      console.warn("Failed to select image from gallery:", err);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setIsZoomed(false);
+  };
 
   // Real browser speech-to-text
   const {
@@ -67,6 +92,22 @@ export default function CameraScanView({ onDiagnosticComplete, onSelectCriticalP
 
   // Request Camera access of client
   const startCamera = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const { Camera } = await import("@capacitor/camera");
+        const status = await Camera.requestPermissions();
+        if (status.camera === "granted") {
+          setHasCameraAccess(true);
+        } else {
+          setHasCameraAccess(false);
+        }
+      } catch (e) {
+        console.warn("Native camera permission request error:", e);
+        setHasCameraAccess(false);
+      }
+      return;
+    }
+
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
@@ -138,29 +179,48 @@ export default function CameraScanView({ onDiagnosticComplete, onSelectCriticalP
   };
 
   /**
-   * Captures a frame from the live camera and sends it to Gemini Vision
-   * for AI-based image diagnosis.
+   * Captures a photo either from the native camera or the web video element.
    */
-  const handleCaptureAndDiagnose = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+  const handleCapturePhoto = async () => {
+    let base64 = "";
 
-    const captured = captureFrame(videoRef.current, canvasRef.current);
-    if (!captured) {
-      console.warn("Failed to capture frame from video feed.");
-      return;
+    if (Capacitor.isNativePlatform()) {
+      const nativePhoto = await captureNativePhoto();
+      if (!nativePhoto) {
+        console.warn("Failed to capture native photo.");
+        return;
+      }
+      base64 = nativePhoto;
+    } else {
+      if (!videoRef.current || !canvasRef.current) return;
+      const captured = captureFrame(videoRef.current, canvasRef.current);
+      if (!captured) {
+        console.warn("Failed to capture frame from video feed.");
+        return;
+      }
+      base64 = captured.base64;
     }
 
-    // Validate image before sending
-    const validation = validateImage(captured.base64);
+    setSelectedImage(base64);
+  };
+
+  /**
+   * Sends the selected/captured image and current text prompt/transcript to Gemini Vision API.
+   */
+  const handleDiagnoseImage = async (overrideText?: string) => {
+    if (!selectedImage) return;
+
+    const validation = validateImage(selectedImage);
     if (!validation.valid) {
       console.warn("Image validation failed:", validation.error);
       return;
     }
 
     setIsAnalyzing(true);
+    const textInput = overrideText !== undefined ? overrideText : customInput;
 
     try {
-      const payload = buildVisionPayload(captured.base64, customInput || undefined);
+      const payload = buildVisionPayload(selectedImage, textInput || undefined);
       const response = await fetch("/api/diagnose-vision", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -173,15 +233,14 @@ export default function CameraScanView({ onDiagnosticComplete, onSelectCriticalP
 
       const data = await response.json();
       if (data.success && data.diagnosis) {
-        const mapped = mapVisionToDiagnosis(data.diagnosis, customInput);
+        const mapped = mapVisionToDiagnosis(data.diagnosis, textInput);
         onDiagnosticComplete(mapped);
       } else {
         throw new Error("Vision API returned unexpected response");
       }
     } catch (err) {
       console.warn("Vision diagnostics failed, falling back to text-based diagnose:", err);
-      // Fallback: use severity-based classification (no keyword matching)
-      const fallbackText = customInput || "motorcycle issue";
+      const fallbackText = textInput || "motorcycle issue";
       const severity = classifySeverity(fallbackText);
       if (severity === "CRITICAL" || severity === "HIGH") {
         onSelectCriticalPreset();
@@ -195,6 +254,11 @@ export default function CameraScanView({ onDiagnosticComplete, onSelectCriticalP
 
   // Submit Issue to Gemini API or Fallback
   const handleIssueSubmit = async (textToSubmit: string, forceCritical: boolean = false) => {
+    if (selectedImage) {
+      await handleDiagnoseImage(textToSubmit);
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
       const response = await fetch("/api/diagnose", {
@@ -213,7 +277,6 @@ export default function CameraScanView({ onDiagnosticComplete, onSelectCriticalP
       }
     } catch (err) {
       console.warn("Diagnostics API failed, falling back to offline preset:", err);
-      // Fallback via severity classification — no keyword matching
       if (forceCritical) {
         onSelectCriticalPreset();
       } else {
@@ -263,8 +326,33 @@ export default function CameraScanView({ onDiagnosticComplete, onSelectCriticalP
       {/* Futuristic Viewfinder Display */}
       <div className="relative flex-1 mx-4 rounded-3xl overflow-hidden border border-zinc-800/80 bg-zinc-950/70 scanner-beam flex items-center justify-center min-h-[300px]">
         
-        {/* Real Live Camera Stream or Stylized Vector Fallback */}
-        {hasCameraAccess ? (
+        {/* Real Live Camera Stream, Captured Image Preview, or Stylized Vector Fallback */}
+        {selectedImage ? (
+          <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black">
+            <img
+              src={`data:image/jpeg;base64,${selectedImage}`}
+              alt="Inspection Target"
+              className={`w-full h-full object-cover transition-transform duration-300 ${
+                isZoomed ? "scale-150" : "scale-100"
+              }`}
+            />
+            {/* Image control overlay */}
+            <div className="absolute top-4 right-4 flex gap-2 z-40">
+              <button
+                onClick={() => setIsZoomed(!isZoomed)}
+                className="bg-zinc-900/80 hover:bg-zinc-800 text-white text-xs font-semibold py-1.5 px-3 rounded-lg border border-zinc-800 transition-all font-mono-tech"
+              >
+                {isZoomed ? "ZOOM OUT" : "ZOOM IN"}
+              </button>
+              <button
+                onClick={handleRemoveImage}
+                className="bg-red-950/80 hover:bg-red-900 text-red-200 text-xs font-semibold py-1.5 px-3 rounded-lg border border-red-900/40 transition-all font-mono-tech"
+              >
+                REMOVE
+              </button>
+            </div>
+          </div>
+        ) : hasCameraAccess && !Capacitor.isNativePlatform() ? (
           <video
             ref={videoRef}
             playsInline
@@ -302,28 +390,57 @@ export default function CameraScanView({ onDiagnosticComplete, onSelectCriticalP
           </div>
         )}
 
-                {/* Capture Button — triggers real AI vision diagnosis */}
-                {hasCameraAccess && (
-                  <button
-                    id="capture-diagnose-btn"
-                    onClick={handleCaptureAndDiagnose}
-                    disabled={isAnalyzing}
-                    className="absolute bottom-20 left-1/2 -translate-x-1/2 z-30 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-700 text-zinc-950 disabled:text-zinc-500 font-bold text-xs tracking-wider py-2.5 px-5 rounded-full uppercase transition-all duration-300 shadow-[0_4px_20px_rgba(16,185,129,0.35)] flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed font-cyber"
-                    title="Capture photo and analyze with AI"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <ScanLine className="w-4 h-4" />
-                        Capture & Diagnose
-                      </>
-                    )}
-                  </button>
-                )}
+        {/* Shutter actions grid */}
+        <div className="absolute bottom-20 inset-x-0 flex items-center justify-center gap-4 z-30">
+          {/* Gallery Button */}
+          <button
+            id="choose-gallery-btn"
+            onClick={handleSelectFromGallery}
+            disabled={isAnalyzing}
+            className="bg-zinc-900/90 hover:bg-zinc-800 text-emerald-400 font-bold p-3 rounded-full border border-zinc-800 transition-all shadow-md flex items-center justify-center cursor-pointer"
+            title="Choose from Gallery"
+          >
+            <FolderOpen className="w-4 h-4" />
+          </button>
+
+          {/* Main Action Button */}
+          <button
+            id="capture-diagnose-btn"
+            onClick={selectedImage ? () => handleDiagnoseImage() : handleCapturePhoto}
+            disabled={isAnalyzing}
+            className="bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-700 text-zinc-950 disabled:text-zinc-500 font-bold text-xs tracking-wider py-2.5 px-5 rounded-full uppercase transition-all duration-300 shadow-[0_4px_20px_rgba(16,185,129,0.35)] flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed font-cyber"
+          >
+            {isAnalyzing ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : selectedImage ? (
+              <>
+                <ScanLine className="w-4 h-4" />
+                Diagnose Image
+              </>
+            ) : (
+              <>
+                <Camera className="w-4 h-4" />
+                Capture Photo
+              </>
+            )}
+          </button>
+
+          {/* Clear/Retake Button */}
+          {selectedImage && (
+            <button
+              id="clear-image-btn"
+              onClick={handleRemoveImage}
+              disabled={isAnalyzing}
+              className="bg-red-950/90 hover:bg-red-900 text-red-200 font-bold p-3 rounded-full border border-red-900/40 transition-all shadow-md flex items-center justify-center cursor-pointer"
+              title="Clear Image"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          )}
+        </div>
 
                 {/* Framing HUD brackets in corners */}
         <div className="absolute inset-4 pointer-events-none border-t-2 border-l-2 border-emerald-500/60 w-10 h-10 rounded-tl-lg"></div>
@@ -426,49 +543,72 @@ export default function CameraScanView({ onDiagnosticComplete, onSelectCriticalP
             Analyze Preset
           </button>
         </div>
-
         {/* Audio feedback simulated level */}
-        <div className="flex items-center justify-center gap-8 py-2">
-          <div className="flex gap-0.5 items-center">
-            <span className="w-[3px] h-3 bg-zinc-800 rounded-sm"></span>
-            <span className="w-[3px] h-5 bg-zinc-700 rounded-sm"></span>
-            <span className="w-[3px] h-7 bg-emerald-500 rounded-sm animate-pulse"></span>
-            <span className="w-[3px] h-4 bg-zinc-700 rounded-sm"></span>
-            <span className="w-[3px] h-2 bg-zinc-800 rounded-sm"></span>
+        <div className="flex flex-col items-center justify-center gap-3 py-2">
+          <div className="flex items-center justify-center gap-8">
+            <div className="flex gap-0.5 items-center">
+              <span className={`w-[3px] h-3 bg-zinc-800 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+              <span className={`w-[3px] h-5 bg-zinc-700 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+              <span className={`w-[3px] h-7 bg-emerald-500 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+              <span className={`w-[3px] h-4 bg-zinc-700 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+              <span className={`w-[3px] h-2 bg-zinc-800 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+            </div>
+
+            {/* Glowing Green Microphone Button — Real Speech-to-Text */}
+            <button
+              id="microphone-hold-button"
+              onClick={toggleListening}
+              disabled={!speechSupported}
+              className={`w-14 h-14 rounded-full flex items-center justify-center text-zinc-950 shadow-[0_0_20px_rgba(5,255,100,0.4)] border-4 border-[#0b0b0c] hover:scale-105 active:scale-95 transition-all duration-300 relative cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                isMicListening ? "bg-red-500 animate-pulse" : "bg-emerald-500"
+              }`}
+              title={
+                !speechSupported
+                  ? "Speech recognition not supported on this browser"
+                  : isMicListening
+                    ? "Tap to stop listening"
+                    : "Tap to start voice input"
+              }
+            >
+              <Mic className="w-6 h-6 fill-current" />
+              {isMicListening && (
+                <span className="absolute -inset-1 rounded-full border border-red-400/60 animate-ping pointer-events-none"></span>
+              )}
+              {!isMicListening && !speechTranscript && (
+                <span className="absolute -inset-1 rounded-full border border-emerald-500/40 animate-ping pointer-events-none"></span>
+              )}
+            </button>
+
+            <div className="flex gap-0.5 items-center">
+              <span className={`w-[3px] h-2 bg-zinc-800 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+              <span className={`w-[3px] h-4 bg-zinc-700 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+              <span className={`w-[3px] h-6 bg-emerald-500 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+              <span className={`w-[3px] h-5 bg-zinc-700 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+              <span className={`w-[3px] h-3 bg-zinc-800 rounded-sm ${isMicListening ? "animate-pulse" : ""}`}></span>
+            </div>
           </div>
 
-          {/* Glowing Green Microphone Button — Real Speech-to-Text */}
-          <button
-            id="microphone-hold-button"
-            onClick={toggleListening}
-            disabled={!speechSupported}
-            className={`w-14 h-14 rounded-full flex items-center justify-center text-zinc-950 shadow-[0_0_20px_rgba(5,255,100,0.4)] border-4 border-[#0b0b0c] hover:scale-105 active:scale-95 transition-all duration-300 relative cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-              isMicListening ? "bg-red-500 animate-pulse" : "bg-emerald-500"
-            }`}
-            title={
-              !speechSupported
-                ? "Speech recognition not supported on this browser"
-                : isMicListening
-                  ? "Tap to stop listening"
-                  : "Tap to start voice input"
-            }
-          >
-            <Mic className="w-6 h-6 fill-current" />
-            {isMicListening && (
-              <span className="absolute -inset-1 rounded-full border border-red-400/60 animate-ping pointer-events-none"></span>
-            )}
-            {!isMicListening && !speechTranscript && (
-              <span className="absolute -inset-1 rounded-full border border-emerald-500/40 animate-ping pointer-events-none"></span>
-            )}
-          </button>
-
-          <div className="flex gap-0.5 items-center">
-            <span className="w-[3px] h-2 bg-zinc-800 rounded-sm"></span>
-            <span className="w-[3px] h-4 bg-zinc-700 rounded-sm"></span>
-            <span className="w-[3px] h-6 bg-emerald-500 rounded-sm animate-pulse"></span>
-            <span className="w-[3px] h-5 bg-zinc-700 rounded-sm"></span>
-            <span className="w-[3px] h-3 bg-zinc-800 rounded-sm"></span>
-          </div>
+          {/* Real-time speech status and error prompt overlay */}
+          {(isMicListening || speechTranscript || speechError) && (
+            <div className="w-full bg-zinc-950/60 border border-zinc-900 rounded-2xl p-3 flex flex-col items-center gap-1.5 transition-all">
+              {isMicListening && (
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-widest font-mono-tech">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                  🎤 Listening...
+                </div>
+              )}
+              {speechTranscript && (
+                <p className="text-xs text-zinc-300 text-center max-w-xs italic font-medium font-sans">
+                  "{speechTranscript}"
+                </p>
+              )}
+              {speechError && (
+                <p className="text-xs font-semibold text-red-400 text-center">
+                  {speechError}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -83,8 +83,28 @@ export function getFallbackDiagnosis(type: "battery" | "brake"): Diagnosis {
  */
 export function getFallbackMechanics(): Mechanic[] {
   return [
-    { name: "Apex Precision Moto", rating: 4.9, reviews: 214, distance: "0.8 miles away" },
-    { name: "Nitro Diagnostics Hub", rating: 4.7, reviews: 128, distance: "2.4 miles away" },
+    {
+      name: "Apex Precision Moto",
+      rating: 4.9,
+      reviews: 214,
+      distance: "0.8 miles away",
+      latitude: 37.7749,
+      longitude: -122.4194,
+      distanceMeters: 1287,
+      distanceText: "0.8 miles away",
+      source: "fallback"
+    },
+    {
+      name: "Nitro Diagnostics Hub",
+      rating: 4.7,
+      reviews: 128,
+      distance: "2.4 miles away",
+      latitude: 37.7749,
+      longitude: -122.4194,
+      distanceMeters: 3862,
+      distanceText: "2.4 miles away",
+      source: "fallback"
+    },
   ];
 }
 

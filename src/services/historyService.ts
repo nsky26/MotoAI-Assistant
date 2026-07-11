@@ -30,6 +30,7 @@ import {
 import { getFirebaseApp } from "./firebase";
 import type { DiagnosisRecord, HistoryPaginationResult, HistoryFilters } from "../types/history";
 import type { Diagnosis } from "../types";
+import { saveDiagnosisLocally, queueForSync, isOnline, syncQueueToFirestore, onConnectivityChange } from "./offlineStorage";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -106,16 +107,25 @@ export async function saveDiagnosis(
   userDescription?: string,
   voiceTranscript?: string,
 ): Promise<boolean> {
+  const record = diagnosisToRecord(diagnosis, uid, userDescription, voiceTranscript);
+
+  // Save to local cache in IndexedDB immediately for offline-first design
+  await saveDiagnosisLocally(record);
+
   const firestore = getDb();
-  if (!firestore) return true; // Silent no-op when Firebase not configured
+  if (!firestore || !isOnline()) {
+    // If offline or Firebase not configured, queue it for sync and return true
+    await queueForSync(record);
+    return true;
+  }
 
   try {
-    const record = diagnosisToRecord(diagnosis, uid, userDescription, voiceTranscript);
     await setDoc(doc(firestore, COLLECTION_NAME, uid, SUB_COLLECTION, diagnosis.id), record);
     return true;
   } catch (err) {
-    console.warn("historyService: Failed to save diagnosis:", err);
-    return false;
+    console.warn("historyService: Failed to save diagnosis to Firestore, queuing for sync:", err);
+    await queueForSync(record);
+    return true; // Return true as it is safely queued locally
   }
 }
 
@@ -270,4 +280,40 @@ export async function deleteDiagnosis(
     console.warn("historyService: Failed to delete diagnosis:", err);
     return false;
   }
+}
+
+/**
+ * Helper function to save a single raw DiagnosisRecord directly to Firestore (used by sync).
+ */
+export async function saveRawRecordToFirestore(record: DiagnosisRecord): Promise<boolean> {
+  const firestore = getDb();
+  if (!firestore) return false;
+  try {
+    await setDoc(doc(firestore, COLLECTION_NAME, record.uid, SUB_COLLECTION, record.diagnosisId), record);
+    return true;
+  } catch (err) {
+    console.warn("historyService: Failed to save raw record to Firestore during sync:", err);
+    return false;
+  }
+}
+
+/**
+ * Syncs any pending local queue items to Firestore.
+ */
+export async function syncPendingDiagnoses(): Promise<void> {
+  if (isOnline()) {
+    const result = await syncQueueToFirestore(saveRawRecordToFirestore);
+    if (result.synced > 0) {
+      console.log(`historyService: Synchronized ${result.synced} diagnoses to Firestore.`);
+    }
+  }
+}
+
+// Automatically register connectivity listener to trigger sync when coming online
+if (typeof window !== "undefined") {
+  onConnectivityChange((online) => {
+    if (online) {
+      syncPendingDiagnoses().catch(console.warn);
+    }
+  });
 }

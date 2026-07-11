@@ -211,79 +211,95 @@ Rules:
 });
 
 // ────────────────────────────────────────────────────────────────────────────
-// API Endpoint: Nearby mechanics via Google Places API
+// API Endpoint: Nearby mechanics via OpenStreetMap (Overpass API)
 // ────────────────────────────────────────────────────────────────────────────
 app.post("/api/nearby-mechanics", async (req, res) => {
-  const { latitude, longitude, issue, severity } = req.body;
+  const { latitude, longitude } = req.body;
 
   if (latitude === undefined || longitude === undefined) {
     return res.status(400).json({ success: false, error: "Missing latitude/longitude." });
   }
 
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
-    // No API key — return fallback mechanics
-    return res.json({ success: true, mechanics: getFallbackMechanics() });
-  }
+  const query = `[out:json];
+(
+node["shop"="motorcycle"](around:5000,${latitude},${longitude});
+node["shop"="motorcycle_repair"](around:5000,${latitude},${longitude});
+node["shop"="repair"](around:5000,${latitude},${longitude});
+node["amenity"="vehicle_repair"](around:5000,${latitude},${longitude});
+node["craft"="mechanic"](around:5000,${latitude},${longitude});
+node["service"="repair"](around:5000,${latitude},${longitude});
+node["motorcycle"="yes"](around:5000,${latitude},${longitude});
+);
+out center tags;`;
 
-  // Search queries targeting motorcycle-specific services
-  const queries = ["motorcycle+repair", "motorcycle+mechanic", "bike+service+center"];
-  const allResults: any[] = [];
-  const seenPlaceIds = new Set<string>();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
-    for (const query of queries) {
-      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&location=${latitude},${longitude}&radius=5000&key=${apiKey}`;
-      
-      const response = await fetch(url);
-      const data = await response.json();
+    const response = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: `data=${encodeURIComponent(query)}`,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
 
-      if (data.status === "OK" && data.results) {
-        for (const place of data.results) {
-          if (!seenPlaceIds.has(place.place_id) && allResults.length < 10) {
-            seenPlaceIds.add(place.place_id);
-
-            // Get detailed info for phone number + open status
-            let phone = "";
-            let openNow = false;
-            try {
-              const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=formatted_phone_number,opening_hours&key=${apiKey}`;
-              const detailRes = await fetch(detailUrl);
-              const detailData = await detailRes.json();
-              if (detailData.status === "OK" && detailData.result) {
-                phone = detailData.result.formatted_phone_number || "";
-                openNow = detailData.result.opening_hours?.open_now || false;
-              }
-            } catch {
-              // Non-critical — continue without details
-            }
-
-            allResults.push({
-              name: place.name,
-              rating: place.rating || 0,
-              reviews: place.user_ratings_total || 0,
-              distance: `${((place.geometry?.location?.lat ? haversineDistance(
-                latitude, longitude,
-                place.geometry.location.lat,
-                place.geometry.location.lng
-              ) : 0)).toFixed(1)} miles away`,
-              phone,
-              placeId: place.place_id,
-              openNow,
-              address: place.formatted_address || "",
-            });
-          }
-        }
-      }
+    if (!response.ok) {
+      throw new Error(`Overpass API returned status ${response.status}`);
     }
 
-    // Sort by rating (highest first)
-    allResults.sort((a, b) => b.rating - a.rating);
+    const data = await response.json();
+    const elements = data.elements || [];
+    const allResults: any[] = [];
 
-    return res.json({ success: true, mechanics: allResults.slice(0, MAX_MECHANICS) });
+    for (const element of elements) {
+      const tags = element.tags || {};
+      const lat = element.lat;
+      const lon = element.lon;
+
+      if (lat === undefined || lon === undefined) continue;
+
+      const name = tags.name || "Unnamed Motorcycle Workshop";
+      const phone = tags.phone || tags["contact:phone"] || "";
+      const opening_hours = tags.opening_hours || "";
+
+      // Build readable address from available address fields
+      const addrParts: string[] = [];
+      if (tags["addr:housenumber"]) addrParts.push(tags["addr:housenumber"]);
+      if (tags["addr:street"]) addrParts.push(tags["addr:street"]);
+      if (tags["addr:suburb"]) addrParts.push(tags["addr:suburb"]);
+      if (tags["addr:city"]) addrParts.push(tags["addr:city"]);
+      if (tags["addr:state"]) addrParts.push(tags["addr:state"]);
+      const address = addrParts.join(", ") || "Address not available";
+
+      const distMiles = haversineDistance(latitude, longitude, lat, lon);
+      const distanceMeters = distMiles * 1609.34;
+      const distanceText = `${distMiles.toFixed(1)} miles away`;
+
+      allResults.push({
+        name,
+        latitude: lat,
+        longitude: lon,
+        distanceMeters,
+        distanceText,
+        distance: distanceText,
+        phone,
+        address,
+        opening_hours,
+        source: "osm",
+      });
+    }
+
+    // Sort by distanceMeters
+    allResults.sort((a, b) => a.distanceMeters - b.distanceMeters);
+
+    return res.json({ success: true, mechanics: allResults.slice(0, 10) });
   } catch (err: any) {
-    console.warn("Places API search failed:", err.message);
-    return res.json({ success: true, mechanics: getFallbackMechanics() });
+    clearTimeout(timeoutId);
+    console.warn("Overpass API search failed:", err.message);
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -299,7 +315,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-const MAX_MECHANICS = 8;
+const MAX_MECHANICS = 10;
 
 // Assistant Copilot Question endpoint (for repair help)
 app.post("/api/ask-gemini", async (req, res) => {

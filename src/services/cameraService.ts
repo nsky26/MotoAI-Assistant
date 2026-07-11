@@ -179,3 +179,23 @@ export function compressImage(base64: string, quality: number = 0.5): string {
     return base64;
   }
 }
+
+/**
+ * Captures a photo using the native Capacitor Camera plugin.
+ *
+ * @returns A promise resolving to the base64 string, or null if failed
+ */
+export async function captureNativePhoto(): Promise<string | null> {
+  try {
+    const { Camera, CameraResultType } = await import("@capacitor/camera");
+    const image = await Camera.getPhoto({
+      quality: 70,
+      allowEditing: false,
+      resultType: CameraResultType.Base64,
+    });
+    return image.base64String || null;
+  } catch (err) {
+    console.warn("Native camera capture failed:", err);
+    return null;
+  }
+}

@@ -10,6 +10,7 @@
  * Unit-test friendly.
  */
 import type { Part, Relationship, GraphNode } from "./knowledgeTypes";
+import { getParts as getOfflineParts, getRelationships as getOfflineRelationships, isInitialized } from "./offlineStorage";
 
 // ---------------------------------------------------------------------------
 // In-memory Graph
@@ -23,6 +24,13 @@ let _relationships: Relationship[] | null = null;
  */
 async function loadParts(): Promise<Map<string, Part>> {
   if (_parts) return _parts;
+  if (isInitialized()) {
+    const offlineParts = getOfflineParts();
+    if (offlineParts && offlineParts.size > 0) {
+      _parts = offlineParts;
+      return _parts;
+    }
+  }
   try {
     const res = await fetch("/knowledge/parts.json");
     const data = await res.json();
@@ -41,6 +49,13 @@ async function loadParts(): Promise<Map<string, Part>> {
  */
 async function loadRelationships(): Promise<Relationship[]> {
   if (_relationships) return _relationships;
+  if (isInitialized()) {
+    const offlineRels = getOfflineRelationships();
+    if (offlineRels && offlineRels.length > 0) {
+      _relationships = offlineRels;
+      return _relationships;
+    }
+  }
   try {
     const res = await fetch("/knowledge/relationships.json");
     const data = await res.json();

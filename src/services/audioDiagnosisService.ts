@@ -277,6 +277,7 @@ export class AudioDiagnosisEngine {
   private frequencyBuffer: Float32Array | null = null;
   private timeDomainBuffer: Float32Array | null = null;
   private lastAnalysisTime = 0;
+  private lastUiUpdateTime = 0;
 
   constructor(config?: Partial<AudioDiagnosisConfig>) {
     this.config = { ...DEFAULT_AUDIO_CONFIG, ...config };
@@ -417,27 +418,31 @@ export class AudioDiagnosisEngine {
   private analyzeLoop(): void {
     if (!this.isListening || !this.analyser) return;
 
-    // Get frequency and time-domain data
-    // Use Float32Array constructor without generic variance issues
-    const freqLen = this.analyser.frequencyBinCount;
-    const timeLen = this.analyser.frequencyBinCount;
-    const freqArray = new Float32Array(freqLen);
-    const timeArray = new Float32Array(timeLen);
-    this.analyser.getFloatFrequencyData(freqArray);
-    this.analyser.getFloatTimeDomainData(timeArray);
-    // Copy back to our buffers
-    if (this.frequencyBuffer) {
-      for (let i = 0; i < freqLen; i++) this.frequencyBuffer[i] = freqArray[i];
-    }
-    if (this.timeDomainBuffer) {
-      for (let i = 0; i < timeLen; i++) this.timeDomainBuffer[i] = timeArray[i];
-    }
+    const now = performance.now();
 
-    // Calculate current amplitude level
-    this.currentLevel = this.calculateAmplitude(this.timeDomainBuffer!);
+    // Throttle UI data updates and Float32Array copies to ~10 FPS (every 100ms) to save CPU/battery
+    if (now - this.lastUiUpdateTime >= 100) {
+      this.lastUiUpdateTime = now;
+
+      const freqLen = this.analyser.frequencyBinCount;
+      const timeLen = this.analyser.frequencyBinCount;
+      const freqArray = new Float32Array(freqLen);
+      const timeArray = new Float32Array(timeLen);
+      this.analyser.getFloatFrequencyData(freqArray);
+      this.analyser.getFloatTimeDomainData(timeArray);
+
+      if (this.frequencyBuffer) {
+        for (let i = 0; i < freqLen; i++) this.frequencyBuffer[i] = freqArray[i];
+      }
+      if (this.timeDomainBuffer) {
+        for (let i = 0; i < timeLen; i++) this.timeDomainBuffer[i] = timeArray[i];
+      }
+
+      // Calculate current amplitude level
+      this.currentLevel = this.calculateAmplitude(this.timeDomainBuffer!);
+    }
 
     // Run analysis at the configured interval
-    const now = performance.now();
     if (now - this.lastAnalysisTime >= this.config.analysisWindowMs) {
       this.lastAnalysisTime = now;
       this.analyzeAudioFrame();

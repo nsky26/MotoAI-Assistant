@@ -11,6 +11,8 @@ import {
   Auth,
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -18,6 +20,7 @@ import {
   User,
   UserCredential,
 } from "firebase/auth";
+import { Capacitor } from "@capacitor/core";
 import { getFirebaseApp, isFirebaseConfigured as checkFirebaseConfigured } from "./firebase";
 
 // ---------------------------------------------------------------------------
@@ -77,6 +80,17 @@ export function subscribeToAuthState(callback: AuthStateCallback): () => void {
 
   callback({ user: null, isLoading: true, isInitialized: false });
 
+  // Handle redirect result if coming back from redirect
+  getRedirectResult(fbAuth)
+    .then((result) => {
+      if (result?.user) {
+        callback({ user: result.user, isLoading: false, isInitialized: true });
+      }
+    })
+    .catch((err) => {
+      console.warn("Firebase Auth redirect result retrieval failed:", err);
+    });
+
   const unsubscribe = onAuthStateChanged(
     fbAuth,
     (user) => {
@@ -101,8 +115,13 @@ export async function signInWithGoogle(): Promise<AuthResult> {
   try {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
-    const result: UserCredential = await signInWithPopup(fbAuth, provider);
-    return { success: true, user: result.user };
+    if (Capacitor.isNativePlatform()) {
+      await signInWithRedirect(fbAuth, provider);
+      return { success: true, user: null };
+    } else {
+      const result: UserCredential = await signInWithPopup(fbAuth, provider);
+      return { success: true, user: result.user };
+    }
   } catch (err: any) {
     if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
       return { success: false, user: null, error: "Sign-in cancelled." };

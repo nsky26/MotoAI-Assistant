@@ -57,7 +57,7 @@ export default function CriticalAlertView({ diagnosis, onBackToScan }: CriticalA
   const handleNavigate = (shop: Mechanic) => {
     setActiveNav(shop.name);
     // Open Google Maps in a new tab
-    const url = buildNavigationUrl(shop.placeId, shop.name);
+    const url = buildNavigationUrl(shop.latitude, shop.longitude, shop.name);
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -164,6 +164,17 @@ export default function CriticalAlertView({ diagnosis, onBackToScan }: CriticalA
             </span>
           </div>
 
+          {/* Warning Banner */}
+          {(() => {
+            const isOfflineOrFallback = shops.some(shop => shop.source === "fallback" || shop.source === "cache") || !!mechanicsError;
+            return isOfflineOrFallback ? (
+              <div className="bg-amber-950/40 border border-amber-900/60 rounded-xl p-3 text-amber-200 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>Live mechanic information is unavailable. Showing cached/offline results.</span>
+              </div>
+            ) : null;
+          })()}
+
           {/* Mechanics Grid stack list */}
           <div className="space-y-3">
             {shops.map((shop, key) => (
@@ -179,15 +190,40 @@ export default function CriticalAlertView({ diagnosis, onBackToScan }: CriticalA
                   <div>
                     <h4 className="text-sm font-extrabold text-zinc-200 tracking-tight">{shop.name}</h4>
                     <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
-                      <div className="flex items-center text-amber-400">
-                        <Star className="w-3.5 h-3.5 fill-current" />
-                        <span className="text-zinc-200 font-bold ml-1 text-xs">{shop.rating}</span>
-                      </div>
-                      <span className="text-zinc-600">|</span>
-                      <span>({shop.reviews} reviews)</span>
-                      <span className="text-zinc-600">|</span>
+                      {shop.rating !== undefined && shop.rating > 0 && (
+                        <>
+                          <div className="flex items-center text-amber-400">
+                            <Star className="w-3.5 h-3.5 fill-current" />
+                            <span className="text-zinc-200 font-bold ml-1 text-xs">{shop.rating}</span>
+                          </div>
+                          <span className="text-zinc-600">|</span>
+                        </>
+                      )}
+                      {shop.reviews !== undefined && shop.reviews > 0 && (
+                        <>
+                          <span>({shop.reviews} reviews)</span>
+                          <span className="text-zinc-600">|</span>
+                        </>
+                      )}
                       <span className="font-semibold text-zinc-300">{shop.distance}</span>
                     </div>
+                    {shop.address && (
+                      <p className="text-[11px] text-zinc-500 mt-1 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-zinc-600 shrink-0" />
+                        <span>{shop.address}</span>
+                      </p>
+                    )}
+                    {shop.phone && (
+                      <p className="text-[11px] text-zinc-500 mt-0.5 flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-zinc-600 shrink-0" />
+                        <span>{shop.phone}</span>
+                      </p>
+                    )}
+                    {shop.opening_hours && (
+                      <p className="text-[11px] text-emerald-500/80 mt-0.5 font-medium">
+                        Hours: {shop.opening_hours}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -195,7 +231,7 @@ export default function CriticalAlertView({ diagnosis, onBackToScan }: CriticalA
                 <div className="grid grid-cols-2 gap-2 mt-4">
                   <button
                     id={`navigate-shop-${key}`}
-                    onClick={() => setActiveNav(shop.name)}
+                    onClick={() => handleNavigate(shop)}
                     className="bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-white text-zinc-300 text-xs py-3 rounded-xl font-bold tracking-wide flex items-center justify-center gap-1.5 transition-all cursor-pointer font-cyber"
                   >
                     <Navigation className="w-3.5 h-3.5" />
@@ -203,7 +239,7 @@ export default function CriticalAlertView({ diagnosis, onBackToScan }: CriticalA
                   </button>
                   <button
                     id={`dial-shop-${key}`}
-                    onClick={() => setActiveCall(shop.name)}
+                    onClick={() => handleCall(shop)}
                     className="bg-rose-100 hover:bg-rose-200 text-zinc-950 text-xs py-3 rounded-xl font-bold tracking-wide flex items-center justify-center gap-1.5 transition-all cursor-pointer font-cyber"
                   >
                     <Phone className="w-3.5 h-3.5 fill-current" />

@@ -26,7 +26,11 @@ const firebaseConfig = {
  * Returns true if Firebase has been configured with real credentials.
  */
 export function isFirebaseConfigured(): boolean {
-  return !!firebaseConfig.apiKey && firebaseConfig.apiKey.length > 10;
+  const isConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey.length > 10;
+  if (!isConfigured) {
+    console.warn("Firebase configuration is incomplete. Please check your VITE_FIREBASE_* environment variables.");
+  }
+  return isConfigured;
 }
 
 /**

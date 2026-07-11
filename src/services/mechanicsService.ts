@@ -108,6 +108,8 @@ export function requestGeolocation(): Promise<GeolocationPosition> {
   });
 }
 
+import { Capacitor } from "@capacitor/core";
+
 /**
  * Fetches nearby mechanics from the backend Places API proxy.
  *
@@ -123,48 +125,107 @@ export async function fetchNearbyMechanics(
   issue?: string,
   severity?: SeverityLevel,
 ): Promise<Mechanic[]> {
+  const cacheKey = `mechanics_${latitude.toFixed(3)}_${longitude.toFixed(3)}`;
+
+  // Try retrieving from client cache
+  try {
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      const parsed = JSON.parse(cachedData);
+      const now = Date.now();
+      const ageMs = now - parsed.timestamp;
+      const ageHours = ageMs / (1000 * 60 * 60);
+      if (ageHours < 24) {
+        // Cache is valid! Mark as cache
+        const mechanics = parsed.mechanics.map((m: any) => ({
+          ...m,
+          source: "cache" as const,
+        }));
+        return mechanics;
+      }
+    }
+  } catch (cacheErr) {
+    console.warn("mechanicsService: Error reading cache:", cacheErr);
+  }
+
+  // Not cached or expired -> fetch from API
   try {
     const response = await fetch("/api/nearby-mechanics", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        latitude,
-        longitude,
-        issue,
-        severity,
-      }),
+      body: JSON.stringify({ latitude, longitude }),
     });
 
     if (!response.ok) {
       throw new Error(`API returned ${response.status}`);
     }
 
-    const data: MechanicSearchResponse = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error);
+    const data = await response.json();
+    if (!data.success || !data.mechanics) {
+      throw new Error(data.error || "Failed response format from server");
     }
 
-    return data.mechanics || [];
-  } catch (err) {
-    console.warn("mechanicsService: Failed to fetch nearby mechanics:", err);
-    // Return fallback mechanics on failure
-    return getFallbackMechanics();
+    // Save success to localStorage cache with timestamp
+    try {
+      const cacheObject = {
+        timestamp: Date.now(),
+        mechanics: data.mechanics,
+      };
+      localStorage.setItem(cacheKey, JSON.stringify(cacheObject));
+    } catch (cacheWriteErr) {
+      console.warn("mechanicsService: Failed to write to cache:", cacheWriteErr);
+    }
+
+    return data.mechanics;
+  } catch (fetchErr) {
+    console.warn("mechanicsService: Fetch nearby mechanics failed, attempting expired cache:", fetchErr);
+
+    // Attempt to return local cache even if expired
+    try {
+      const cachedData = localStorage.getItem(cacheKey);
+      if (cachedData) {
+        const parsed = JSON.parse(cachedData);
+        const mechanics = parsed.mechanics.map((m: any) => ({
+          ...m,
+          source: "cache" as const,
+        }));
+        return mechanics;
+      }
+    } catch (cacheErr) {
+      console.warn("mechanicsService: Error reading expired cache:", cacheErr);
+    }
+
+    // If no local cache exists, return getFallbackMechanics()
+    const fallbacks = getFallbackMechanics();
+    return fallbacks.map(f => ({
+      ...f,
+      source: "fallback" as const,
+    }));
   }
 }
 
 /**
- * Builds a Google Maps navigation URL for a given place.
+ * Builds a navigation URL for a given place.
  *
- * @param placeId - The Google Places place_id
- * @returns A URL string that opens Google Maps navigation
+ * @returns A URL string that opens navigation
  */
-export function buildNavigationUrl(placeId?: string, name?: string): string {
-  if (placeId) {
-    return `https://www.google.com/maps/dir/?api=1&destination_place_id=${placeId}`;
+export function buildNavigationUrl(
+  latOrPlaceId?: number | string,
+  lonOrName?: number | string,
+  name?: string
+): string {
+  if (typeof latOrPlaceId === "number" && typeof lonOrName === "number") {
+    const isAndroid = Capacitor.getPlatform() === "android";
+    if (isAndroid) {
+      const label = encodeURIComponent(name || "Motorcycle Repair");
+      return `geo:${latOrPlaceId},${lonOrName}?q=${latOrPlaceId},${lonOrName}(${label})`;
+    }
+    return `https://www.google.com/maps/dir/?api=1&destination=${latOrPlaceId},${lonOrName}`;
   }
-  // Fallback: search by name
-  const encoded = encodeURIComponent(name || "motorcycle repair");
+
+  // Fallback to name search
+  const shopName = typeof latOrPlaceId === "string" ? latOrPlaceId : (typeof lonOrName === "string" ? lonOrName : name);
+  const encoded = encodeURIComponent(shopName || "motorcycle repair");
   return `https://www.google.com/maps/search/${encoded}`;
 }
 

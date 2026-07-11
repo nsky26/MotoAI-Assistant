@@ -9,6 +9,7 @@
  * Unit-test friendly: all inputs are explicit, no side effects.
  */
 import type { Rule, RuleCondition, EvaluationResult } from "./knowledgeTypes";
+import { getRules as getOfflineRules, isInitialized } from "./offlineStorage";
 
 // ---------------------------------------------------------------------------
 // Knowledge Loader
@@ -22,6 +23,13 @@ let _rules: Rule[] | null = null;
  */
 export async function loadRules(): Promise<Rule[]> {
   if (_rules) return _rules;
+  if (isInitialized()) {
+    const offlineRules = getOfflineRules();
+    if (offlineRules && offlineRules.length > 0) {
+      _rules = offlineRules;
+      return _rules;
+    }
+  }
   try {
     const response = await fetch("/knowledge/rules.json");
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -43,6 +51,19 @@ export async function loadRules(): Promise<Rule[]> {
  * @returns True if the condition is satisfied
  */
 export function evaluateCondition(condition: RuleCondition, facts: Record<string, unknown>): boolean {
+  // Special handling for symptom_present to support multiple simultaneous symptoms
+  if (condition.fact === "symptom_present") {
+    const presentSymptoms = facts["symptoms_set"] as Set<string> | undefined;
+    if (presentSymptoms) {
+      if (condition.operator === "eq") {
+        return presentSymptoms.has(condition.value as string);
+      }
+      if (condition.operator === "neq") {
+        return !presentSymptoms.has(condition.value as string);
+      }
+    }
+  }
+
   const factValue = facts[condition.fact];
 
   switch (condition.operator) {
@@ -157,10 +178,12 @@ export async function evaluateSymptoms(
   };
 
   // Set present symptoms
+  const symptomsSet = new Set<string>();
   for (const symptomId of symptoms) {
-    facts[`symptom_present`] = symptomId;
-    // Use triggerSymptom matching — set last symptom as active
+    symptomsSet.add(symptomId);
+    facts[`symptom_present`] = symptomId; // Keep for fallback compatibility
   }
+  facts["symptoms_set"] = symptomsSet;
 
   // Check for critical symptoms (from knowledge/symptoms.json)
   const criticalSymptoms = new Set(["engine_no_crank", "no_electrical_power"]);

@@ -1,16 +1,18 @@
 export interface Mechanic {
   name: string;
-  rating: number;
-  reviews: number;
+  latitude?: number;
+  longitude?: number;
+  distanceMeters?: number;
+  distanceText?: string;
   distance: string;
-  /** Phone number in international format (e.g. "+15551234567") */
   phone?: string;
-  /** Google Places place_id for map links */
-  placeId?: string;
-  /** Whether the shop is currently open */
-  openNow?: boolean;
-  /** Full address string */
   address?: string;
+  openNow?: boolean;
+  opening_hours?: string;
+  rating?: number;
+  reviews?: number;
+  placeId?: string;
+  source?: "osm" | "cache" | "fallback" | "user" | "verified";
 }
 
 /**
