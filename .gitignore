@@ -7,7 +7,7 @@ coverage/
 .env*
 !.env.example
 android/
-.google-services(1).json
+google-services(1).json
 google-services.json
 *google-services*.json
-google-services(1).json
+

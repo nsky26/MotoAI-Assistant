@@ -86,3 +86,31 @@ export function replanWorkflow(
     }
   };
 }
+
+import type { WorkflowSession } from "./knowledgeTypes";
+
+export function startWorkflow(workflowId: string): WorkflowSession {
+  return {
+    workflowId,
+    currentStepIndex: 0,
+    verifiedSteps: new Set<number>(),
+    completed: false,
+    startedAt: new Date().toISOString(),
+    completedAt: null,
+    isReversed: false
+  };
+}
+
+export function getWorkflow(workflowId: string): RepairWorkflow | null {
+  return getWorkflowForFailure(workflowId);
+}
+
+export function verifyStep(session: WorkflowSession, stepIndex: number): WorkflowSession {
+  const updatedVerified = new Set(session.verifiedSteps);
+  updatedVerified.add(stepIndex);
+  return {
+    ...session,
+    verifiedSteps: updatedVerified,
+    currentStepIndex: stepIndex + 1
+  };
+}
