@@ -7,11 +7,25 @@ import { getFallbackDiagnosis, getFallbackMechanics, resolveFallbackPreset } fro
 import { buildDiagnosisPrompt, mapAiToDiagnosis, classifySeverity } from "./src/services/aiDiagnosisService";
 import type { AiDiagnosisResponse } from "./src/types";
 import { runSymptomDiagnosis } from "./src/services/ruleEngine";
+import { fileURLToPath } from "url";
+
+const getDirname = () => {
+  if (typeof __dirname !== "undefined") return __dirname;
+  try {
+    if (typeof import.meta !== "undefined" && import.meta.url) {
+      return path.dirname(fileURLToPath(import.meta.url));
+    }
+  } catch (e) {}
+  return process.cwd();
+};
+const currentDirname = getDirname();
 
 dotenv.config();
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3000", 10);
+const isDev = process.env.NODE_ENV !== "production";
+
 
 app.use(express.json());
 
@@ -467,14 +481,15 @@ Provide a concise, practical, pro-mechanic advice answer. Max 100 words. Speak d
 
 // Setup Vite Dev server or production static serving
 async function startServer() {
-  if (process.env.NODE_ENV === "development") {
+  if (isDev) {
+    console.log("Starting MotoAI in Development Mode with Vite Middleware...");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.resolve(__dirname);
+    const distPath = path.resolve(currentDirname, "dist");
     console.log(`Serving static assets from production dist path: ${distPath}`);
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
@@ -483,8 +498,8 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`MotoAI Server running on port ${PORT}`);
+    console.log(`MotoAI Server running on port ${PORT} (${isDev ? "development" : "production"})`);
   });
 }
 
-startServer();
+startServer();

@@ -88,3 +88,68 @@ export function getUpstreamDependencies(componentId: string): string[] {
 
   return dependencies;
 }
+
+import type { Part, GraphNode as KGGraphNode } from "./knowledgeTypes";
+import partsData from "../../knowledge/parts.json";
+
+function getPartById(id: string): Part {
+  const p = (partsData as any[]).find(x => x.id === id);
+  return {
+    id: id,
+    name: p?.name || id.replace(/_/g, " "),
+    category: p?.system || "General",
+    subsystem: p?.system || "General",
+    accessPath: p?.accessPath || [],
+    tools: p?.tools || ["socket_wrench"],
+    symptoms: p?.symptoms || [],
+    relatedParts: p?.relatedParts || [],
+    criticality: p?.criticality || "medium",
+    inspectionProtocol: `inspect_${id}`,
+    repairProtocol: `repair_${id}`,
+    commonIssues: p?.failures || [],
+    estimatedCost: p?.estimatedCost || { min: 20, max: 100, currency: "USD" }
+  };
+}
+
+export async function findAccessPath(partId: string): Promise<Part[]> {
+  const part = getPartById(partId);
+  const pathPartIds = part.accessPath || [];
+  return pathPartIds.map(id => getPartById(id));
+}
+
+export async function findDependencies(partId: string): Promise<KGGraphNode[]> {
+  const nodes: KGGraphNode[] = [
+    {
+      part: getPartById(partId),
+      relationships: [],
+      depth: 0
+    }
+  ];
+
+  let depth = 1;
+  for (const edge of GRAPH_EDGES) {
+    if (edge.to === partId || edge.from === partId) {
+      const otherId = edge.to === partId ? edge.from : edge.to;
+      nodes.push({
+        part: getPartById(otherId),
+        relationships: [
+          {
+            id: `rel_${edge.from}_${edge.to}`,
+            source: edge.from,
+            target: edge.to,
+            type: edge.relation,
+            description: `${edge.from} ${edge.relation} ${edge.to}`
+          }
+        ],
+        depth: depth++
+      });
+    }
+  }
+
+  return nodes;
+}
+
+export async function generateRepairSequence(partId: string): Promise<string[]> {
+  const access = await findAccessPath(partId);
+  return [...access.map(p => p.id), partId];
+}

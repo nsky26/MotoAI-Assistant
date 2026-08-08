@@ -193,3 +193,42 @@ export async function evaluateSymptoms(symptoms: string[]): Promise<EvaluateSymp
     confidenceUpdates
   };
 }
+
+import type { EvaluationResult } from "./knowledgeTypes";
+
+export function loadRules(): Rule[] {
+  return rulesData as Rule[];
+}
+
+export function fireRules(symptomsOrRules: any, facts?: any): EvaluationResult {
+  let symptoms: string[] = [];
+  if (Array.isArray(symptomsOrRules) && (symptomsOrRules.length === 0 || typeof symptomsOrRules[0] === "string")) {
+    symptoms = symptomsOrRules;
+  } else if (Array.isArray(facts)) {
+    symptoms = facts;
+  } else if (facts && typeof facts === "object") {
+    if (Array.isArray(facts.symptoms)) {
+      symptoms = facts.symptoms;
+    } else {
+      symptoms = Object.keys(facts).filter(k => facts[k] === true);
+    }
+  }
+
+  const diagnoses = runSymptomDiagnosis(symptoms);
+  const firedRules = diagnoses.map(d => d.id);
+  const suggestedInspections = diagnoses.flatMap(d => d.steps);
+  const confidenceUpdates = new Map<string, number>();
+
+  for (const d of diagnoses) {
+    confidenceUpdates.set(d.id, d.confidence / 100);
+  }
+
+  return {
+    firedRules,
+    suggestedInspections,
+    confidenceUpdates,
+    shouldStop: diagnoses.length > 0 && diagnoses[0].confidence > 90,
+    stopReason: diagnoses.length > 0 && diagnoses[0].confidence > 90 ? "High confidence diagnosis found" : null,
+    severity: diagnoses.length > 0 ? diagnoses[0].severityLevel : null
+  };
+}
